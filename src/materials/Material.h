@@ -110,6 +110,7 @@ void Material<dim>::approximate_tangent(const double &dt,
     delete working_state;
 }
 
+
 template<unsigned int dim>
 class ElasticMaterial : public Material<dim> {
 public:

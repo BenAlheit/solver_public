@@ -1,21 +1,27 @@
 #include <iostream>
 #include "Solver.h"
 #include "SolverExample.h"
+
+
 #include "examples/CubeWithIMP.h"
+
 #include "examples/CubeWithSphere.h"
 #include "examples/CubeWithSpherePBC.h"
 #include "examples/Cube.h"
 #include "examples/ElastoPlasticCube.h"
 #include "examples/QuarterCylinder.h"
 #include "examples/NeckingCylinder.h"
-#include "examples/CheckApproximateTangent.h"
 #include "examples/PSC.h"
+
+#include "examples/check-approximate-tangent/CheckApproximateTangentElastic.h"
+#include "examples/check-approximate-tangent/CheckApproximateTangentViscoelastic.h"
+
+#include "examples/cyclical-tension-compression/ElasticCyclicalTensionCompression.h"
+#include "examples/cyclical-tension-compression/ViscoCyclicalTensionCompression.h"
+#include "examples/cyclical-tension-compression/ExplicitRateDependentPlasticityCyclicalTensionCompression.h"
 
 #include "examples/polycrystal/PolycrystalPBC.h"
 #include "examples/polycrystal-imp/PolycrystalIMPPBC.h"
-
-#include "examples/cyclical-tension-compression/ViscoCyclicalTensionCompression.h"
-#include "examples/cyclical-tension-compression/ElasticCyclicalTensionCompression.h"
 
 // TODO Documentation
 // TODO Documentation
@@ -48,14 +54,18 @@ int main(int argc, char **argv){
 //    PolycrystalIMPPBC<dim> problem = PolycrystalIMPPBC<dim>();
 
 
-//    CheckApproximateTangent<dim> problem = CheckApproximateTangent<dim>();
+//    CheckApproximateTangentElastic<dim> problem = CheckApproximateTangentElastic<dim>();
+//    CheckApproximateTangentViscoelastic<dim> problem = CheckApproximateTangentViscoelastic<dim>();
+
 //    ElastoPlasticCube<dim> problem = ElastoPlasticCube<dim>();
 //    QuarterCylinder<dim> problem = QuarterCylinder<dim>();
 //    NeckingCylinder<dim> problem = NeckingCylinder<dim>();
 
 
 //    ElasticCyclicalTensionCompression<dim> problem = ElasticCyclicalTensionCompression<dim>();
-    ViscoCyclicalTensionCompression<dim> problem = ViscoCyclicalTensionCompression<dim>();
+//    ViscoCyclicalTensionCompression<dim> problem = ViscoCyclicalTensionCompression<dim>();
+    ExplicitRateDependentPlasticityCyclicalTensionCompression<dim> problem
+    = ExplicitRateDependentPlasticityCyclicalTensionCompression<dim>();
 
 
     //    ElasticProblem<2> elastic_problem;

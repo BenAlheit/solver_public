@@ -1,20 +1,16 @@
-//
-// Created by alhei on 2022/09/05.
-//
+#ifndef SOLVER_CHECKAPPROXIMATETANGENTELASTIC_H
+#define SOLVER_CHECKAPPROXIMATETANGENTELASTIC_H
 
-#ifndef SOLVER_CHECKAPPROXIMATETANGENT_H
-#define SOLVER_CHECKAPPROXIMATETANGENT_H
-
-#include "../utils/utils.h"
+#include "../../utils/utils.h"
 
 template<unsigned int dim>
-class CheckApproximateTangent{
+class CheckApproximateTangentElastic{
 public:
-    CheckApproximateTangent();
+    CheckApproximateTangentElastic();
 };
 
 template<unsigned int dim>
-CheckApproximateTangent<dim>::CheckApproximateTangent() {
+CheckApproximateTangentElastic<dim>::CheckApproximateTangentElastic() {
     const double kappa = 1;
     const double mu = 2;
     Tensor<2, dim> F_n = Physics::Elasticity::StandardTensors<dim>::I;
@@ -49,4 +45,4 @@ CheckApproximateTangent<dim>::CheckApproximateTangent() {
 
 }
 
-#endif //SOLVER_CHECKAPPROXIMATETANGENT_H
+#endif //SOLVER_CHECKAPPROXIMATETANGENTELASTIC_H

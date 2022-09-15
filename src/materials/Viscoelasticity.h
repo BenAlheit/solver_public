@@ -17,15 +17,9 @@ public:
                     const vector<double> &tau)
             : Material<dim>(e_law->get_id()), elastic_law(e_law), beta(beta), tau(tau), n(beta.size()) {};
 
-    void update_stress(const double &dt) override {
-        throw NotImplemented("'update_stress' has not been implemented for 'Viscoelasticity'. "
-                             "Use 'update_stress_and_tangent' instead.");
-    };
+    void update_stress(const double &dt) override;
 
-    void update_tangent(const double &dt) override {
-        throw NotImplemented("'update_tangent' has not been implemented for 'Viscoelasticity'. "
-                             "Use 'update_stress_and_tangent' instead.");
-    };
+    void update_tangent(const double &dt) override;
 
     void update_stress_and_tangent(const double &dt) override;
 
@@ -43,6 +37,49 @@ private:
     const vector<double> tau;
     const unsigned int n;
 };
+
+
+template<unsigned int dim>
+void Viscoelasticity<dim>::update_stress(const double &dt){
+    Tensor<2, dim> G, G_T, tau_inf_n, tau_inf_n1;
+    G = invert(state->F_n) * state->F_n1;
+    G_T = transpose(G);
+    tau_inf_n = this->state->tau_inf_n;
+
+    elastic_law->set_state(state);
+    elastic_law->update_stress(dt);
+    tau_inf_n1 = this->state->tau_n1;
+
+    double xi;
+    double beta_xi = 0;
+
+    for (unsigned int alpha = 0; alpha < n; alpha++) {
+        xi = exp(-dt / (2. * tau.at(alpha)));
+        beta_xi += beta.at(alpha) * xi;
+        state->tau_v_n1.at(alpha) = xi * (beta.at(alpha) * tau_inf_n1
+                                          + G_T * (xi * state->tau_v_n.at(alpha) - beta.at(alpha) * tau_inf_n) * G);
+        this->state->tau_n1 += state->tau_v_n1.at(alpha);
+    }
+
+    this->state->tau_inf_n1 = tau_inf_n1;
+
+}
+
+template<unsigned int dim>
+void Viscoelasticity<dim>::update_tangent(const double &dt){
+    elastic_law->set_state(state);
+    elastic_law->update_tangent(dt);
+
+    double xi;
+    double beta_xi = 0;
+
+    for (unsigned int alpha = 0; alpha < n; alpha++) {
+        xi = exp(-dt / (2. * tau.at(alpha)));
+        beta_xi += beta.at(alpha) * xi;
+    }
+
+    this->state->c_n1 *= (1 + beta_xi);
+}
 
 template<unsigned int dim>
 void Viscoelasticity<dim>::update_stress_and_tangent(const double &dt) {

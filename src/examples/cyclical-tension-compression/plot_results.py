@@ -5,7 +5,8 @@ import matplotlib
 import numpy as np
 
 # type = "Viscoelastic"
-type = "Elastic"
+# type = "Elastic"
+type = "Viscoplastic"
 
 results = f"./{type}VolumeAverages/"
 

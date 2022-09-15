@@ -355,6 +355,141 @@ public:
 
 };
 
+
+template<unsigned int dim>
+class ExplicitRateDependentPlasticityState : public KronnerDecomp<dim> {
+public:
+    ExplicitRateDependentPlasticityState()
+            : KronnerDecomp<dim>(), Fp_n(Physics::Elasticity::StandardTensors<dim>::I),
+              Fp_n1(Physics::Elasticity::StandardTensors<dim>::I), dlam_n(0), dlam_n1(0), ep_n(0), ep_n1(0), f_n(0),
+              f_n1(0), plastic_flow_n(false), plastic_flow_n1(false) {};
+
+    ExplicitRateDependentPlasticityState(ExplicitRateDependentPlasticityState<dim> *to_cpy)
+            : KronnerDecomp<dim>(to_cpy), Fp_n(to_cpy->Fp_n), Fp_n1(to_cpy->Fp_n1), dlam_n(to_cpy->dlam_n),
+              dlam_n1(to_cpy->dlam_n1), ep_n(to_cpy->ep_n), ep_n1(to_cpy->ep_n1), f_n(to_cpy->f_n), f_n1(to_cpy->f_n1),
+              plastic_flow_n(to_cpy->plastic_flow_n), plastic_flow_n1(to_cpy->plastic_flow_n1) {};
+
+    virtual StateBase<dim> *
+    copy() override { return dynamic_cast<StateBase<dim> *>(new ExplicitRateDependentPlasticityState<dim>()); };
+
+    void copy(ExplicitRateDependentPlasticityState<dim> *to_cpy) {
+        KronnerDecomp<dim>::copy(to_cpy);
+        this->Fp_n1 = to_cpy->Fp_n1;
+        this->T_n1 = to_cpy->T_n1;
+        this->dFp_n1 = to_cpy->dFp_n1;
+        this->ep_n1 = to_cpy->ep_n1;
+        this->dlam_n1 = to_cpy->dlam_n1;
+        this->f_n1 = to_cpy->f_n1;
+        this->plastic_flow_n1 = to_cpy->plastic_flow_n1;
+
+        this->Fp_n = to_cpy->Fp_n;
+        this->T_n = to_cpy->T_n;
+        this->dFp_n = to_cpy->dFp_n;
+        this->ep_n = to_cpy->ep_n;
+        this->dlam_n = to_cpy->dlam_n;
+        this->f_n = to_cpy->f_n;
+        this->plastic_flow_n = to_cpy->plastic_flow_n;
+    };
+
+    Tensor<2, dim> Fp_n;
+    Tensor<2, dim> Fp_n1;
+
+    Tensor<2, dim> T_n;
+    Tensor<2, dim> T_n1;
+
+    Tensor<2, dim> dFp_n;
+    Tensor<2, dim> dFp_n1;
+
+    double dlam_n;
+    double dlam_n1;
+
+    double ep_n;
+    double ep_n1;
+
+    double f_n;
+    double f_n1;
+
+    bool plastic_flow_n;
+    bool plastic_flow_n1;
+
+    bool initial_nr_iteration = true;
+
+    void update_elastic_component() override {
+        this->elastic_component->F_n1 = this->F_n1 * invert(Fp_n1);
+    };
+
+    void update() override {
+        update_elastic_component();
+        this->elastic_component->update();
+        StateBase<dim>::update();
+        Fp_n = Fp_n1;
+        T_n = T_n1;
+        dFp_n = dFp_n1;
+        ep_n = ep_n1;
+        dlam_n = dlam_n1;
+        f_n = f_n1;
+        plastic_flow_n = plastic_flow_n1;
+        initial_nr_iteration = true;
+    };
+
+    void reset() override {
+        StateBase<dim>::reset();
+        Fp_n1 = Fp_n;
+        T_n1 = T_n;
+        dFp_n1 = dFp_n;
+        ep_n1 = ep_n;
+        dlam_n1 = dlam_n;
+        f_n1 = f_n;
+        plastic_flow_n1 = plastic_flow_n;
+    };
+
+    void copy_new_values(ExplicitRateDependentPlasticityState<dim> *to_cpy) {
+        Fp_n1 = to_cpy->Fp_n1;
+        T_n1 = to_cpy->T_n1;
+        dFp_n1 = to_cpy->dFp_n1;
+        ep_n1 = to_cpy->ep_n1;
+        dlam_n1 = to_cpy->dlam_n1;
+        f_n1 = to_cpy->f_n1;
+    };
+
+
+    double scalar_output(ScalarOutputFlag flag) override {
+        switch (flag) {
+            case ELASTIC_STRAIN_ENERGY:
+                return this->elastic_component->elastic_strain_energy_n1;
+            case EP:
+                return ep_n1;
+            case DLAM:
+                return dlam_n1;
+            case FPLAS:
+                return f_n1;
+            default:
+                return StateBase<dim>::scalar_output(flag);
+        }
+    };
+
+    Tensor<1, dim> vector_output(VectorOutputFlag flag) override {
+        switch (flag) {
+            default:
+                return StateBase<dim>::vector_output(flag);
+        }
+    };
+
+    Tensor<2, dim> tensor_output(TensorOutputFlag flag) override {
+        switch (flag) {
+            case T:
+                return T_n1;
+            case FP:
+                return Fp_n1;
+            case FE:
+                return this->elastic_component->F_n1;
+            default:
+                return StateBase<dim>::tensor_output(flag);
+        }
+    };
+
+};
+
 template<unsigned int dim>
 class RateDependentPlasticityState : public RateIndependentPlasticityState<dim>{
 

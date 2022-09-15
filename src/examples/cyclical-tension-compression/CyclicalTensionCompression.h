@@ -27,7 +27,7 @@ public:
                                const unsigned int &n_out,
                                const vector<double> &dts,
                                const unsigned int &order = 1,
-                               const unsigned int &n_refinements = 0);
+                               const unsigned int &n_refinements = 2);
 
     Triangulation<dim> triangulation;
     vector<Stage<dim>> stages;
