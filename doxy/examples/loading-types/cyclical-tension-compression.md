@@ -1,0 +1,1 @@
+# Cyclical tension and compression  {#cyclical}
