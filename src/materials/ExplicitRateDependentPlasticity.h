@@ -38,19 +38,21 @@ private:
 
 template<unsigned int dim>
 void ExplicitRateDependentPlasticity<dim>::update_stress(const double &dt) {
-    Tensor<2, dim> Tn, tau_bar_n, tau_n, Lp;
-    double sig_bar, dln;
-    tau_n = state->tau_n;
-    tau_bar_n = tau_n - Physics::Elasticity::StandardTensors<dim>::I * trace(tau_n) / 3.;
-    sig_bar = tau_bar_n.norm() * sqrt(3. / 2.);
-    if(sig_bar > 0) {
+    if(almost_equals(state->ep_n1, state->ep_n)) {
+        Tensor<2, dim> Tn, tau_bar_n, tau_n, Lp;
+        double sig_bar, dln;
+        tau_n = state->tau_n;
+        tau_bar_n = tau_n - Physics::Elasticity::StandardTensors<dim>::I * trace(tau_n) / 3.;
+        sig_bar = tau_bar_n.norm() * sqrt(3. / 2.);
+        if (sig_bar > 0) {
 
-        Tn = tau_bar_n / tau_bar_n.norm();
-        dln = (1./mu) * pow(sig_bar / sig_y, 1. / m);
-        Lp = dln * Tn;
+            Tn = tau_bar_n / tau_bar_n.norm();
+            dln = (1. / mu) * pow(sig_bar / sig_y, 1. / m);
+            Lp = dln * Tn;
 
-        state->Fp_n1 = state->Fp_n + dt * Lp * state->Fp_n;
-        state->ep_n1 = state->ep_n + dt * fabs(dln);
+            state->Fp_n1 = state->Fp_n + dt * Lp * state->Fp_n;
+            state->ep_n1 = state->ep_n + dt * fabs(dln);
+        }
     }
 
     state->update_elastic_component();
@@ -63,19 +65,21 @@ void ExplicitRateDependentPlasticity<dim>::update_stress(const double &dt) {
 
 template<unsigned int dim>
 void ExplicitRateDependentPlasticity<dim>::update_stress_and_tangent(const double &dt) {
-    Tensor<2, dim> Tn, tau_bar_n, tau_n, Lp;
-    double sig_bar, dln;
-    tau_n = state->tau_n;
-    tau_bar_n = tau_n - Physics::Elasticity::StandardTensors<dim>::I * trace(tau_n) / 3.;
-    sig_bar = tau_bar_n.norm() * sqrt(3. / 2.);
-    if(sig_bar > 0) {
+    if(almost_equals(state->ep_n1, state->ep_n)) {
+        Tensor<2, dim> Tn, tau_bar_n, tau_n, Lp;
+        double sig_bar, dln;
+        tau_n = state->tau_n;
+        tau_bar_n = tau_n - Physics::Elasticity::StandardTensors<dim>::I * trace(tau_n) / 3.;
+        sig_bar = tau_bar_n.norm() * sqrt(3. / 2.);
+        if (sig_bar > 0) {
 
-        Tn = tau_bar_n / tau_bar_n.norm();
-        dln = (1./mu) * pow(sig_bar / sig_y, 1. / m);
-        Lp = dln * Tn;
+            Tn = tau_bar_n / tau_bar_n.norm();
+            dln = (1. / mu) * pow(sig_bar / sig_y, 1. / m);
+            Lp = dln * Tn;
 
-        state->Fp_n1 = state->Fp_n + dt * Lp * state->Fp_n;
-        state->ep_n1 = state->ep_n + dt * fabs(dln);
+            state->Fp_n1 = state->Fp_n + dt * Lp * state->Fp_n;
+            state->ep_n1 = state->ep_n + dt * fabs(dln);
+        }
     }
 
     state->update_elastic_component();

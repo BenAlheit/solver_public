@@ -5,8 +5,7 @@
 
 #include "examples/CubeWithIMP.h"
 
-#include "examples/CubeWithSphere.h"
-#include "examples/CubeWithSpherePBC.h"
+
 #include "examples/Cube.h"
 #include "examples/ElastoPlasticCube.h"
 #include "examples/QuarterCylinder.h"
@@ -20,6 +19,10 @@
 #include "examples/cyclical-tension-compression/ViscoCyclicalTensionCompression.h"
 #include "examples/cyclical-tension-compression/ExplicitRateDependentPlasticityCyclicalTensionCompression.h"
 
+#include "examples/cube-with-sphere/CubeWithSphere.h"
+#include "examples/cube-with-sphere/CubeWithSpherePBC.h"
+#include "examples/cube-with-sphere/ViscoplasticCubeWithSpherePBC.h"
+
 #include "examples/polycrystal/PolycrystalPBC.h"
 #include "examples/polycrystal-imp/PolycrystalIMPPBC.h"
 
@@ -29,7 +32,6 @@
 // TODO Documentation
 // TODO Documentation
 
-// TODO Viscoplastic material
 // TODO Viscocrystalplastic material
 // TODO Fix parallelization
 
@@ -45,11 +47,8 @@ int main(int argc, char **argv){
 //    PSC<dim> problem = PSC<dim>();
 
 
-//    Cube<dim> problem = Cube<dim>();
-//    CubeWithSphere<dim> problem = CubeWithSphere<dim>();
 //    CubeWithIMP<dim> problem = CubeWithIMP<dim>();
 
-//    CubeWithSpherePBC<dim> problem = CubeWithSpherePBC<dim>();
 //    PolycrystalPBC<dim> problem = PolycrystalPBC<dim>();
 //    PolycrystalIMPPBC<dim> problem = PolycrystalIMPPBC<dim>();
 
@@ -64,11 +63,16 @@ int main(int argc, char **argv){
 
 //    ElasticCyclicalTensionCompression<dim> problem = ElasticCyclicalTensionCompression<dim>();
 //    ViscoCyclicalTensionCompression<dim> problem = ViscoCyclicalTensionCompression<dim>();
-    ExplicitRateDependentPlasticityCyclicalTensionCompression<dim> problem
-    = ExplicitRateDependentPlasticityCyclicalTensionCompression<dim>();
+//    ExplicitRateDependentPlasticityCyclicalTensionCompression<dim> problem
+//    = ExplicitRateDependentPlasticityCyclicalTensionCompression<dim>();
+
+//    Cube<dim> problem = Cube<dim>();
+//    CubeWithSphere<dim> problem = CubeWithSphere<dim>();
+//    CubeWithSpherePBC<dim> problem = CubeWithSpherePBC<dim>();
+    ViscoplasticCubeWithSpherePBC<dim> problem = ViscoplasticCubeWithSpherePBC<dim>();
 
 
-    //    ElasticProblem<2> elastic_problem;
+//    ElasticProblem<2> elastic_problem;
 //    elastic_problem.run();
 
     return 0;

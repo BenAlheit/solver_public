@@ -24,8 +24,8 @@ ExplicitRateDependentPlasticityCyclicalTensionCompression<dim>::ExplicitRateDepe
 
 //    const double visc = 100;
 //    const double m = 0.1;
-//    const double visc = 1000;
-    const double visc = 1;
+    const double visc = 1000;
+//    const double visc = 1;
     const double m = 0.1;
     const double sig_y = 60;
 

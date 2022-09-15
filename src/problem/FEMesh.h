@@ -382,16 +382,43 @@ FEMesh<dim>::project_scalar_qp_field(const ScalarOutputFlag &flag, const vector<
         }
     }
 
+
     projection_solver.solve(projected_values);
 
+
+
+    bool neighbour_is_not_of_correct_material = true;
     for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
         if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
 
-            cell->get_dof_indices(local_dof_indices);
-            for (const auto &dof_index: local_dof_indices)
-                projected_values[dof_index] = nan("");
+            for(unsigned int i_face=0; i_face < cell->n_faces(); i_face++){
+                try {
+                    neighbour_is_not_of_correct_material = find(material_ids.begin(), material_ids.end(), cell->neighbor(i_face)->material_id()) == material_ids.end();
+                } catch (...) { }
+                if(not neighbour_is_not_of_correct_material)
+                    break;
+            }
+
+            if(neighbour_is_not_of_correct_material) {
+                cell->get_dof_indices(local_dof_indices);
+
+
+                for (const auto &dof_index: local_dof_indices)
+                    projected_values[dof_index] = nan("");
+            }else{
+                neighbour_is_not_of_correct_material = true;
+            }
         }
     }
+
+//    for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
+//        if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
+//
+//            cell->get_dof_indices(local_dof_indices);
+//            for (const auto &dof_index: local_dof_indices)
+//                projected_values[dof_index] = nan("");
+//        }
+//    }
 
     return projected_values;
 }
@@ -492,14 +519,27 @@ FEMesh<dim>::project_tensor_qp_field(const TensorOutputFlag &flag, const vector<
         for (const auto &j_comp: range)
             projection_solver.solve(comp_wise_values.at(i_comp).at(j_comp));
 
+    bool neighbour_is_not_of_correct_material = true;
     for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
         if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
 
-            cell->get_dof_indices(local_dof_indices);
-            for (const auto &dof_index: local_dof_indices)
-                for (const auto &i_comp: range)
-                    for (const auto &j_comp: range)
-                        comp_wise_values.at(i_comp).at(j_comp)[dof_index] = nan("");
+            for(unsigned int i_face=0; i_face < cell->n_faces(); i_face++){
+                try {
+                    neighbour_is_not_of_correct_material = find(material_ids.begin(), material_ids.end(), cell->neighbor(i_face)->material_id()) == material_ids.end();
+                } catch (...) { }
+                if(not neighbour_is_not_of_correct_material)
+                    break;
+            }
+
+            if(neighbour_is_not_of_correct_material) {
+                cell->get_dof_indices(local_dof_indices);
+                for (const auto &dof_index: local_dof_indices)
+                    for (const auto &i_comp: range)
+                        for (const auto &j_comp: range)
+                            comp_wise_values.at(i_comp).at(j_comp)[dof_index] = nan("");
+            }else{
+                neighbour_is_not_of_correct_material = true;
+            }
         }
     }
 

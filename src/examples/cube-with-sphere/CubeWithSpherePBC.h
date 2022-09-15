@@ -1,7 +1,3 @@
-//
-// Created by alhei on 2022/08/29.
-//
-
 #ifndef SOLVER_CUBEWITHSPHEREPBC_H
 #define SOLVER_CUBEWITHSPHEREPBC_H
 
@@ -12,10 +8,10 @@
 #include <deal.II/grid/manifold_lib.h>
 #include <deal.II/grid/grid_out.h>
 
-#include "../materials/OutputFlags.h"
-#include "../problem/FEMesh.h"
-#include "../utils/utils.h"
-#include "../Solver.h"
+#include "../../materials/OutputFlags.h"
+#include "../../problem/FEMesh.h"
+#include "../../utils/utils.h"
+#include "../../Solver.h"
 
 
 using namespace std;
@@ -140,7 +136,7 @@ template<unsigned int dim>
 void CubeWithSpherePBC<dim>::read_and_refine_mesh() {
     GridIn<dim> grid_in;
     grid_in.attach_triangulation(triangulation);
-    ifstream input_file("../src/examples/cube-with-particle.ucd");
+    ifstream input_file("../src/examples/cube-with-sphere/cube-with-particle.ucd");
     grid_in.read_ucd(input_file);
     cout << "Read mesh" << endl;
     triangulation.reset_all_manifolds();
