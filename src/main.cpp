@@ -18,6 +18,7 @@
 #include "examples/cyclical-tension-compression/ElasticCyclicalTensionCompression.h"
 #include "examples/cyclical-tension-compression/ViscoCyclicalTensionCompression.h"
 #include "examples/cyclical-tension-compression/ExplicitRateDependentPlasticityCyclicalTensionCompression.h"
+#include "examples/cyclical-tension-compression/ExplicitRateDependentCrystalPlasticityCyclicalTensionCompression.h"
 
 #include "examples/cube-with-sphere/CubeWithSphere.h"
 #include "examples/cube-with-sphere/CubeWithSpherePBC.h"

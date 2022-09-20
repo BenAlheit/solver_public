@@ -53,6 +53,14 @@ public:
     const map<ScalarOutputFlag, vector<unsigned int>> & get_scalar_outputs() const {return scalar_outputs;};
     const map<VectorOutputFlag, vector<unsigned int>> & get_vector_outputs() const {return vector_outputs;};
     const map<TensorOutputFlag, vector<unsigned int>> & get_tensor_outputs() const {return tensor_outputs;};
+
+    const map<nScalarOutput, vector<unsigned int>, nScalarOutputHash> & get_n_scalar_outputs() const
+    {return n_scalar_outputs;};
+    const map<nVectorOutput, vector<unsigned int>, nVectorOutputHash> & get_n_vector_outputs() const
+    {return n_vector_outputs;};
+    const map<nTensorOutput, vector<unsigned int>, nTensorOutputHash> & get_n_tensor_outputs() const
+    {return n_tensor_outputs;};
+
     const vector<MeshOutputFlag> & get_mesh_outputs() const {return mesh_outputs;};
 
     const map<ScalarOutputFlag, vector<unsigned int>> & get_scalar_volume_average_outputs() const
@@ -62,20 +70,7 @@ public:
     const map<TensorOutputFlag, vector<unsigned int>> & get_tensor_volume_average_outputs() const
     {return tensor_volume_average;};
 
-    void update_time_values(){
-        time->next_stage(end_time, n_steps, n_out);
-//
-//        time->time_end = end_time;
-//        time->n_steps = n_steps;
-//        time->n_steps_out = n_out;
-//
-//        time->timestep = 0;
-//        time->stage = time->stage + 1;
-//
-//        time->delta_t = (end_time - time->current()) / n_steps;
-//        time->output_delta_t = (end_time - time->current()) / n_out;
-//        time->next_output = time->current() + time->output_delta_t;
-    };
+    void update_time_values(){ time->next_stage(end_time, n_steps, n_out); };
 
 protected:
 
@@ -91,9 +86,14 @@ private:
     const map<VectorOutputFlag, vector<unsigned int>> vector_outputs;
     const map<TensorOutputFlag, vector<unsigned int>> tensor_outputs;
 
+    const map<nScalarOutput, vector<unsigned int>, nScalarOutputHash> n_scalar_outputs;
+    const map<nVectorOutput, vector<unsigned int>, nVectorOutputFlag> n_vector_outputs;
+    const map<nTensorOutput, vector<unsigned int>, nTensorOutputHash> n_tensor_outputs;
+
     const map<ScalarOutputFlag, vector<unsigned int>> scalar_volume_average;
     const map<VectorOutputFlag, vector<unsigned int>> vector_volume_average;
     const map<TensorOutputFlag, vector<unsigned int>> tensor_volume_average;
+
     const vector<MeshOutputFlag> mesh_outputs;
 };
 

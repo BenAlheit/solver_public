@@ -52,7 +52,6 @@ protected:
 
     StateBase<dim> *state;
     array<unsigned int, dim> dim_range;
-    Tensor<2, dim> orientation;
 
 private:
     const unsigned int id;

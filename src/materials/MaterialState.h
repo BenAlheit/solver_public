@@ -52,9 +52,9 @@ public:
 
     virtual double scalar_output(ScalarOutputFlag flag) {
         switch (flag) {
-            case P:
+            case ScalarOutputFlag::P:
                 return trace(tau_n1) / 3.;
-            case J:
+            case ScalarOutputFlag::J:
                 return determinant(F_n1);
             default:
                 throw NotImplemented(
@@ -64,38 +64,53 @@ public:
 
     virtual Tensor<1, dim> vector_output(VectorOutputFlag flag) {
         switch (flag) {
-            case NS1:
+            case VectorOutputFlag::NS1:
                 return get_tau_eig(0); // TODO This is a very inefficient way of managing eigenvalue output (fix)
-            case NS2:
+            case VectorOutputFlag::NS2:
                 return get_tau_eig(1);
-            case NS3:
+            case VectorOutputFlag::NS3:
                 return get_tau_eig(2);
-            case NB1:
+            case VectorOutputFlag::NB1:
                 return get_B_eig(0);
-            case NB2:
+            case VectorOutputFlag::NB2:
                 return get_B_eig(1);
-            case NB3:
+            case VectorOutputFlag::NB3:
                 return get_B_eig(2);
             default:
                 throw NotImplemented(
-                        "vector_output is not implemented for flag '" + to_string(flag) + "' for this material state.");
+                        "vector_output is not implemented for flag '" + to_string<dim>(flag) + "' for this material state.");
         }
     };
 
     virtual Tensor<2, dim> tensor_output(TensorOutputFlag flag) {
         switch (flag) {
-            case F:
+            case TensorOutputFlag::F:
                 return F_n1;
-            case STRESS:
+            case TensorOutputFlag::STRESS:
                 return tau_n1;
-            case STRAIN:
+            case TensorOutputFlag::STRAIN:
                 return 0.5 * (transpose(F_n1) * F_n1 - Physics::Elasticity::StandardTensors<dim>::I);
-            case FirstPiolaStress:
+            case TensorOutputFlag::FirstPiolaStress:
                 return tau_n1 * invert(transpose(F_n1));
             default:
                 throw NotImplemented(
-                        "tensor_output is not implemented for flag '" + to_string(flag) + "' for this material state.");
+                        "tensor_output is not implemented for flag '" + to_string<dim>(flag) + "' for this material state.");
         }
+    };
+
+    virtual double n_scalar_output(const nScalarOutputFlag & flag, const unsigned int& i){
+        throw NotImplemented(
+                "'n_scalar_output' is not implemented for flag '" + to_string(flag, i) + "' for this material state.");
+    };
+
+    virtual Tensor<1, dim> n_vector_output(const nVectorOutputFlag & flag, const unsigned int& i){
+        throw NotImplemented(
+                "'n_vector_output' is not implemented for flag '" + to_string<dim>(flag, i) + "' for this material state.");
+    };
+
+    virtual Tensor<2, dim> n_tensor_output(const nTensorOutputFlag & flag, const unsigned int& i){
+        throw NotImplemented(
+                "'n_tensor_output' is not implemented for flag '" + to_string<dim>(flag, i) + "' for this material state.");
     };
 
     Tensor<2, dim> F_n;
@@ -142,7 +157,7 @@ public:
 
     double scalar_output(ScalarOutputFlag flag) override {
         switch (flag) {
-            case ELASTIC_STRAIN_ENERGY:
+            case ScalarOutputFlag::ELASTIC_STRAIN_ENERGY:
                 return elastic_strain_energy_n1;
             default:
                 return StateBase<dim>::scalar_output(flag);
@@ -322,11 +337,11 @@ public:
 
     double scalar_output(ScalarOutputFlag flag) override {
         switch (flag) {
-            case EP:
+            case ScalarOutputFlag::EP:
                 return ep_n1;
-            case DLAM:
+            case ScalarOutputFlag::DLAM:
                 return dlam_n1;
-            case FPLAS:
+            case ScalarOutputFlag::FPLAS:
                 return f_n1;
             default:
                 return StateBase<dim>::scalar_output(flag);
@@ -342,11 +357,11 @@ public:
 
     Tensor<2, dim> tensor_output(TensorOutputFlag flag) override {
         switch (flag) {
-            case T:
+            case TensorOutputFlag::T:
                 return T_n1;
-            case FP:
+            case TensorOutputFlag::FP:
                 return Fp_n1;
-            case FE:
+            case TensorOutputFlag::FE:
                 return this->elastic_component->F_n1;
             default:
                 return StateBase<dim>::tensor_output(flag);
@@ -455,13 +470,13 @@ public:
 
     double scalar_output(ScalarOutputFlag flag) override {
         switch (flag) {
-            case ELASTIC_STRAIN_ENERGY:
+            case ScalarOutputFlag::ELASTIC_STRAIN_ENERGY:
                 return this->elastic_component->elastic_strain_energy_n1;
-            case EP:
+            case ScalarOutputFlag::EP:
                 return ep_n1;
-            case DLAM:
+            case ScalarOutputFlag::DLAM:
                 return dlam_n1;
-            case FPLAS:
+            case ScalarOutputFlag::FPLAS:
                 return f_n1;
             default:
                 return StateBase<dim>::scalar_output(flag);
@@ -477,11 +492,11 @@ public:
 
     Tensor<2, dim> tensor_output(TensorOutputFlag flag) override {
         switch (flag) {
-            case T:
+            case TensorOutputFlag::T:
                 return T_n1;
-            case FP:
+            case TensorOutputFlag::FP:
                 return Fp_n1;
-            case FE:
+            case TensorOutputFlag::FE:
                 return this->elastic_component->F_n1;
             default:
                 return StateBase<dim>::tensor_output(flag);
@@ -523,5 +538,8 @@ public:
     SymmetricTensor<4, dim> cv_n;
     SymmetricTensor<4, dim> cv_n1;
 };
+
+
+
 
 #endif //SOLVER_MATERIALSTATE_H

@@ -111,10 +111,25 @@ public:
     project_scalar_qp_field(const ScalarOutputFlag &flag, const vector<unsigned int> &material_ids) const;
 
     Vector<double>
+    project_n_scalar_qp_field(const nScalarOutputFlag &flag,
+                              const vector<unsigned int> &material_ids,
+                              const unsigned int &i) const;
+
+    Vector<double>
     project_vector_qp_field(const VectorOutputFlag &flag, const vector<unsigned int> &material_ids) const;
 
     Vector<double>
+    project_n_vector_qp_field(const nVectorOutputFlag &flag,
+                              const vector<unsigned int> &material_ids,
+                              const unsigned int &i) const;
+
+    Vector<double>
     project_tensor_qp_field(const TensorOutputFlag &flag, const vector<unsigned int> &material_ids) const;
+
+    Vector<double>
+    project_n_tensor_qp_field(const nTensorOutputFlag &flag,
+                              const vector<unsigned int> &material_ids,
+                              const unsigned int &i) const;
 
     Vector<double>
     mesh_output_values(const MeshOutputFlag &flag) const;
@@ -386,26 +401,27 @@ FEMesh<dim>::project_scalar_qp_field(const ScalarOutputFlag &flag, const vector<
     projection_solver.solve(projected_values);
 
 
-
     bool neighbour_is_not_of_correct_material = true;
     for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
         if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
 
-            for(unsigned int i_face=0; i_face < cell->n_faces(); i_face++){
+            for (unsigned int i_face = 0; i_face < cell->n_faces(); i_face++) {
                 try {
-                    neighbour_is_not_of_correct_material = find(material_ids.begin(), material_ids.end(), cell->neighbor(i_face)->material_id()) == material_ids.end();
-                } catch (...) { }
-                if(not neighbour_is_not_of_correct_material)
+                    neighbour_is_not_of_correct_material =
+                            find(material_ids.begin(), material_ids.end(), cell->neighbor(i_face)->material_id()) ==
+                            material_ids.end();
+                } catch (...) {}
+                if (not neighbour_is_not_of_correct_material)
                     break;
             }
 
-            if(neighbour_is_not_of_correct_material) {
+            if (neighbour_is_not_of_correct_material) {
                 cell->get_dof_indices(local_dof_indices);
 
 
                 for (const auto &dof_index: local_dof_indices)
                     projected_values[dof_index] = nan("");
-            }else{
+            } else {
                 neighbour_is_not_of_correct_material = true;
             }
         }
@@ -423,6 +439,75 @@ FEMesh<dim>::project_scalar_qp_field(const ScalarOutputFlag &flag, const vector<
     return projected_values;
 }
 
+
+template<unsigned int dim>
+Vector<double>
+FEMesh<dim>::project_n_scalar_qp_field(const nScalarOutputFlag &flag,
+                                       const vector<unsigned int> &material_ids
+                                       const unsigned int & i) const {
+    Vector<double> projected_values;
+    projected_values.reinit(projection_dof_handler.n_dofs());
+
+    vector<types::global_dof_index> local_dof_indices(n_shape_fns);
+    double JxW, state_val;
+    StateBase<dim> *state;
+    for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
+        if (find(material_ids.begin(), material_ids.end(), cell->material_id()) != material_ids.end()) {
+
+            cell->get_dof_indices(local_dof_indices);
+
+            for (const auto &qp: qp_range) {
+                JxW = get_JxW(cell->level(), cell->index(), qp);
+                state = get_state(cell->level(), cell->index(), qp);
+//                state_val = state->scalar_output(flag);
+                state_val = state->n_scalar_output(flag, i);
+                for (const auto &i: local_nodes)
+                    projected_values[local_dof_indices[i]] += state_val * get_shape_fns(qp).at(i) * JxW;
+            }
+        }
+    }
+
+
+    projection_solver.solve(projected_values);
+
+
+    bool neighbour_is_not_of_correct_material = true;
+    for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
+        if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
+
+            for (unsigned int i_face = 0; i_face < cell->n_faces(); i_face++) {
+                try {
+                    neighbour_is_not_of_correct_material =
+                            find(material_ids.begin(), material_ids.end(), cell->neighbor(i_face)->material_id()) ==
+                            material_ids.end();
+                } catch (...) {}
+                if (not neighbour_is_not_of_correct_material)
+                    break;
+            }
+
+            if (neighbour_is_not_of_correct_material) {
+                cell->get_dof_indices(local_dof_indices);
+
+
+                for (const auto &dof_index: local_dof_indices)
+                    projected_values[dof_index] = nan("");
+            } else {
+                neighbour_is_not_of_correct_material = true;
+            }
+        }
+    }
+
+//    for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
+//        if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
+//
+//            cell->get_dof_indices(local_dof_indices);
+//            for (const auto &dof_index: local_dof_indices)
+//                projected_values[dof_index] = nan("");
+//        }
+//    }
+
+    return projected_values;
+}
 
 template<unsigned int dim>
 Vector<double>
@@ -450,6 +535,64 @@ FEMesh<dim>::project_vector_qp_field(const VectorOutputFlag &flag, const vector<
                 JxW = get_JxW(cell->level(), cell->index(), qp);
                 state = get_state(cell->level(), cell->index(), qp);
                 state_val = state->vector_output(flag);
+                for (const auto &i: local_nodes)
+                    for (const auto &i_comp: range)
+                        comp_wise_values.at(i_comp)[local_dof_indices[i]] +=
+                                state_val[i_comp] * get_shape_fns(qp).at(i) * JxW;
+            }
+        }
+    }
+
+    for (const auto &i_comp: range)
+        projection_solver.solve(comp_wise_values.at(i_comp));
+
+    for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
+        if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
+
+            cell->get_dof_indices(local_dof_indices);
+            for (const auto &dof_index: local_dof_indices)
+                for (const auto &i_comp: range)
+                    comp_wise_values.at(i_comp)[dof_index] = nan("");
+        }
+    }
+
+    for (const auto &i_comp: range)
+        for (const auto &k: projection_dof_range)
+            projected_values[k * dim + i_comp] = comp_wise_values.at(i_comp)[k];
+
+    return projected_values;
+}
+
+
+template<unsigned int dim>
+Vector<double>
+FEMesh<dim>::project_n_vector_qp_field(const nVectorOutputFlag &flag,
+                                       const vector<unsigned int> &material_ids,
+                                       const unsigned int & i) const {
+    Vector<double> projected_values;
+    projected_values.reinit(dof_handler.n_dofs());
+
+    vector<unsigned int> projection_dof_range(projection_dof_handler.n_dofs());
+    iota(projection_dof_range.begin(), projection_dof_range.end(), 0);
+
+    vector<Vector<double>> comp_wise_values(dim);
+    for (const auto &i_comp: range)
+        comp_wise_values.at(i_comp).reinit(projection_dof_handler.n_dofs());
+
+    vector<types::global_dof_index> local_dof_indices(n_shape_fns);
+    double JxW;
+    Tensor<1, dim> state_val;
+    StateBase<dim> *state;
+    for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
+        if (find(material_ids.begin(), material_ids.end(), cell->material_id()) != material_ids.end()) {
+
+            cell->get_dof_indices(local_dof_indices);
+
+            for (const auto &qp: qp_range) {
+                JxW = get_JxW(cell->level(), cell->index(), qp);
+                state = get_state(cell->level(), cell->index(), qp);
+//                state_val = state->vector_output(flag);
+                state_val = state->n_vector_output(flag, i);
                 for (const auto &i: local_nodes)
                     for (const auto &i_comp: range)
                         comp_wise_values.at(i_comp)[local_dof_indices[i]] +=
@@ -523,21 +666,99 @@ FEMesh<dim>::project_tensor_qp_field(const TensorOutputFlag &flag, const vector<
     for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
         if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
 
-            for(unsigned int i_face=0; i_face < cell->n_faces(); i_face++){
+            for (unsigned int i_face = 0; i_face < cell->n_faces(); i_face++) {
                 try {
-                    neighbour_is_not_of_correct_material = find(material_ids.begin(), material_ids.end(), cell->neighbor(i_face)->material_id()) == material_ids.end();
-                } catch (...) { }
-                if(not neighbour_is_not_of_correct_material)
+                    neighbour_is_not_of_correct_material =
+                            find(material_ids.begin(), material_ids.end(), cell->neighbor(i_face)->material_id()) ==
+                            material_ids.end();
+                } catch (...) {}
+                if (not neighbour_is_not_of_correct_material)
                     break;
             }
 
-            if(neighbour_is_not_of_correct_material) {
+            if (neighbour_is_not_of_correct_material) {
                 cell->get_dof_indices(local_dof_indices);
                 for (const auto &dof_index: local_dof_indices)
                     for (const auto &i_comp: range)
                         for (const auto &j_comp: range)
                             comp_wise_values.at(i_comp).at(j_comp)[dof_index] = nan("");
-            }else{
+            } else {
+                neighbour_is_not_of_correct_material = true;
+            }
+        }
+    }
+
+    for (const auto &i_comp: range)
+        for (const auto &j_comp: range)
+            for (const auto &k: projection_dof_range)
+                projected_values[k * dim * dim + i_comp * dim + j_comp] = comp_wise_values.at(i_comp).at(j_comp)[k];
+
+    return projected_values;
+}
+
+template<unsigned int dim>
+Vector<double>
+FEMesh<dim>::project_n_tensor_qp_field(const nTensorOutputFlag &flag,
+                                       const vector<unsigned int> &material_ids,
+                                       const unsigned int &i) const {
+    Vector<double> projected_values;
+    projected_values.reinit(tensor_dof_handler.n_dofs());
+
+    vector<unsigned int> projection_dof_range(projection_dof_handler.n_dofs());
+    iota(projection_dof_range.begin(), projection_dof_range.end(), 0);
+
+    vector<vector<Vector<double>>> comp_wise_values(dim, vector<Vector<double>>(dim));
+    for (const auto &i_comp: range)
+        for (const auto &j_comp: range)
+            comp_wise_values.at(i_comp).at(j_comp).reinit(projection_dof_handler.n_dofs());
+
+    vector<types::global_dof_index> local_dof_indices(n_shape_fns);
+    double JxW;
+    Tensor<2, dim> state_val;
+    StateBase<dim> *state;
+    for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
+        if (find(material_ids.begin(), material_ids.end(), cell->material_id()) != material_ids.end()) {
+
+            cell->get_dof_indices(local_dof_indices);
+
+            for (const auto &qp: qp_range) {
+                JxW = get_JxW(cell->level(), cell->index(), qp);
+                state = get_state(cell->level(), cell->index(), qp);
+                state_val = state->n_tensor_output(flag, i);
+                for (const auto &i: local_nodes)
+                    for (const auto &i_comp: range)
+                        for (const auto &j_comp: range)
+                            comp_wise_values.at(i_comp).at(j_comp)[local_dof_indices[i]] +=
+                                    state_val[i_comp][j_comp] * get_shape_fns(qp).at(i) * JxW;
+            }
+        }
+    }
+
+    for (const auto &i_comp: range)
+        for (const auto &j_comp: range)
+            projection_solver.solve(comp_wise_values.at(i_comp).at(j_comp));
+
+    bool neighbour_is_not_of_correct_material = true;
+    for (const auto &cell: projection_dof_handler.active_cell_iterators()) {
+        if (find(material_ids.begin(), material_ids.end(), cell->material_id()) == material_ids.end()) {
+
+            for (unsigned int i_face = 0; i_face < cell->n_faces(); i_face++) {
+                try {
+                    neighbour_is_not_of_correct_material =
+                            find(material_ids.begin(), material_ids.end(), cell->neighbor(i_face)->material_id()) ==
+                            material_ids.end();
+                } catch (...) {}
+                if (not neighbour_is_not_of_correct_material)
+                    break;
+            }
+
+            if (neighbour_is_not_of_correct_material) {
+                cell->get_dof_indices(local_dof_indices);
+                for (const auto &dof_index: local_dof_indices)
+                    for (const auto &i_comp: range)
+                        for (const auto &j_comp: range)
+                            comp_wise_values.at(i_comp).at(j_comp)[dof_index] = nan("");
+            } else {
                 neighbour_is_not_of_correct_material = true;
             }
         }
@@ -692,7 +913,7 @@ void FEMesh<dim>::output_vector_averages(const Time *time,
         if (time->get_stage() == 0 && time->get_timestep() == 0) {
             file_contents = "stage, timestep, time" + to_string(out_f.first) + "\n";
 
-            for(const auto & comp : OutputFlags::to_string<dim>(out_f.first))
+            for (const auto &comp: OutputFlags::to_string<dim>(out_f.first))
                 file_contents += ", " + comp;
 
             file_contents += "\n";
@@ -710,7 +931,7 @@ void FEMesh<dim>::output_vector_averages(const Time *time,
         out_file << time->get_stage() << ", "
                  << time->get_timestep() << ", "
                  << time->current();
-        for(const auto & comp : range)
+        for (const auto &comp: range)
             out_file << ", " << value[comp];
 
         out_file << endl;
@@ -750,13 +971,13 @@ void FEMesh<dim>::output_tensor_averages(const Time *time,
 
         value /= vol;
         out_name = "VolumeAveraged" + OutputFlags::to_string<dim>(out_f.first).at(0);
-        out_name = out_name.substr(0, out_name.size()-2);
+        out_name = out_name.substr(0, out_name.size() - 2);
         out_name += ".csv";
 
         if (time->get_stage() == 0 && time->get_timestep() == 0) {
             file_contents = "stage, timestep, time";
-            for(const auto & comp : OutputFlags::to_string<dim>(out_f.first))
-                    file_contents += ", " + comp;
+            for (const auto &comp: OutputFlags::to_string<dim>(out_f.first))
+                file_contents += ", " + comp;
 
             file_contents += "\n";
 
@@ -774,8 +995,8 @@ void FEMesh<dim>::output_tensor_averages(const Time *time,
                  << time->get_timestep() << ", "
                  << time->current();
 
-        for(const auto & icomp : range)
-            for(const auto & jcomp : range)
+        for (const auto &icomp: range)
+            for (const auto &jcomp: range)
                 out_file << ", " << value[icomp][jcomp];
 
         out_file << endl;

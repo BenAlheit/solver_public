@@ -373,6 +373,15 @@ namespace Solver {
                                          scalar_names.at(i));
             }
 
+            for (const auto &out_item: problem->get_stage().get_n_scalar_outputs()){
+                for(unsigned int i = 0; i < out_item.first.n; i++){
+                    scalar_values.push_back(problem->get_mesh()->project_n_scalar_qp_field(out_item.first.flag,
+                                                                                           out_item.second,
+                                                                                           i));
+                    scalar_names.push_back(OutputFlags::to_string(out_item.first.flag));
+                }
+            }
+
             vector<Vector<double>> vector_values;
             vector<vector<string>> vector_names;
             for (const auto &out_item: problem->get_stage().get_vector_outputs()) {
@@ -387,11 +396,29 @@ namespace Solver {
                                          data_component_interpretation);
             }
 
+            for (const auto &out_item: problem->get_stage().get_n_vector_outputs()){
+                for(unsigned int i = 0; i < out_item.first.n; i++){
+                    vector_values.push_back(problem->get_mesh()->project_n_vector_qp_field(out_item.first.flag,
+                                                                                           out_item.second,
+                                                                                           i));
+                    vector_names.push_back(OutputFlags::to_string<dim>(out_item.first.flag));
+                }
+            }
+
             vector<Vector<double>> tensor_values;
             vector<vector<string>> tensor_names;
             for (const auto &out_item: problem->get_stage().get_tensor_outputs()) {
                 tensor_values.push_back(problem->get_mesh()->project_tensor_qp_field(out_item.first, out_item.second));
                 tensor_names.push_back(OutputFlags::to_string<dim>(out_item.first));
+            }
+
+            for (const auto &out_item: problem->get_stage().get_n_tensor_outputs()){
+                for(unsigned int i = 0; i < out_item.first.n; i++){
+                    tensor_values.push_back(problem->get_mesh()->project_n_tensor_qp_field(out_item.first.flag,
+                                                                                           out_item.second,
+                                                                                           i));
+                    tensor_names.push_back(OutputFlags::to_string<dim>(out_item.first.flag));
+                }
             }
 
             for (unsigned int i = 0; i < tensor_values.size(); ++i) {
@@ -413,10 +440,8 @@ namespace Solver {
                                          mesh_names.at(i));
             }
 
-//            Vector<double> boundary_ids(triangulation.n_active_cells());
 
             data_out.build_patches();
-//            string dir_name = "./" + problem->get_name() + "/";
             string rel_vtu_name = problem->get_name() + "-np-" +
                                   to_string(problem->get_mesh()->get_n_mpi_processes())
                                   + "-t-" + to_string(problem->get_time()->get_timestep()) + ".vtu";
