@@ -7,6 +7,7 @@
 
 #include "../Exceptions.h"
 #include <string>
+#include <boost/functional/hash.hpp>
 
 using namespace std;
 
@@ -129,33 +130,39 @@ namespace OutputFlags {
         switch (flag) {
             case nScalarOutputFlag::H:
                 return "History_variable_" + std::to_string(i);
+            case nScalarOutputFlag::ta:
+                return "Schmidt_stress_" + std::to_string(i);
+            case nScalarOutputFlag::nu:
+                return "Slip_rate_" + std::to_string(i);
             default:
                 throw NotImplemented("to_string function not implemented for this ScalarOutputFlag");
         }
     }
 
-    struct nScalarOutput {
-        nScalarOutput(const unsigned int &n,
-                      const nScalarOutputFlag &flag)
-                : n(n), flag(flag) {};
+    typedef pair<nScalarOutputFlag, unsigned int> nScalarOutput;
 
-        const unsigned int n;
-        const nScalarOutputFlag flag;
-
-    };
-
-    struct nScalarOutputHash {
-        size_t operator()(const nScalarOutput &other) const {
-            return hash<unsigned int>()(other.n) ^ hash<nScalarOutputFlag>()(other.flag);
-        }
-    };
+//    struct nScalarOutput {
+//        nScalarOutput(const unsigned int &n,
+//                      const nScalarOutputFlag &flag)
+//                : n(n), flag(flag) {};
+//
+//        const unsigned int n;
+//        const nScalarOutputFlag flag;
+//
+//    };
+//
+//    struct nScalarOutputHash {
+//        size_t operator()(const nScalarOutput &other) const {
+//            return hash<unsigned int>()(other.n) ^ hash<nScalarOutputFlag>()(other.flag);
+//        }
+//    };
 
     enum class nVectorOutputFlag {
         M, S
     };
 
     template<unsigned int dim>
-    string to_string(const nVectorOutputFlag &flag, const unsigned int &i) {
+    vector<string> to_string(const nVectorOutputFlag &flag, const unsigned int &i) {
         switch (flag) {
             case nVectorOutputFlag::M:
                 return create_string_vector_for_vector<dim>("System_normal_" + std::to_string(i));
@@ -166,27 +173,29 @@ namespace OutputFlags {
         }
     }
 
-    struct nVectorOutput {
-        nVectorOutput(const unsigned int &n,
-                      const nVectorOutputFlag &flag)
-                : n(n), flag(flag) {};
+    typedef pair<nVectorOutputFlag, unsigned int> nVectorOutput;
 
-        const unsigned int n;
-        const nVectorOutputFlag flag;
-    };
-
-    struct nVectorOutputHash {
-        size_t operator()(const nVectorOutput &other) const {
-            return hash<unsigned int>()(other.n) ^ hash<nVectorOutputFlag>()(other.flag);
-        }
-    };
+//    struct nVectorOutput {
+//        nVectorOutput(const unsigned int &n,
+//                      const nVectorOutputFlag &flag)
+//                : n(n), flag(flag) {};
+//
+//        const unsigned int n;
+//        const nVectorOutputFlag flag;
+//    };
+//
+//    struct nVectorOutputHash {
+//        size_t operator()(const nVectorOutput &this_out, const nVectorOutput &other) const {
+//            return hash<unsigned int>()(other.n) ^ hash<nVectorOutputFlag>()(other.flag);
+//        }
+//    };
 
     enum class nTensorOutputFlag {
         SYS
     };
 
     template<unsigned int dim>
-    string to_string(const nTensorOutputFlag &flag, const unsigned int &i) {
+    vector<string> to_string(const nTensorOutputFlag &flag, const unsigned int &i) {
         switch (flag) {
             case nTensorOutputFlag::SYS:
                 return create_string_vector_for_tensor<dim>("System_" + std::to_string(i));
@@ -195,20 +204,45 @@ namespace OutputFlags {
         }
     }
 
-    struct nTensorOutput {
-        nTensorOutput(const unsigned int &n,
-                      const nTensorOutputFlag &flag)
-                : n(n), flag(flag) {};
 
-        const unsigned int n;
-        const nTensorOutputFlag flag;
-    };
+    typedef pair<nTensorOutputFlag, unsigned int> nTensorOutput;
 
-    struct nTensorOutputHash {
-        size_t operator()(const nTensorOutput &other) const {
-            return hash<unsigned int>()(other.n) ^ hash<nTensorOutputFlag>()(other.flag);
+    struct nOutputHash {
+    public:
+        template<typename T, typename U>
+        size_t operator()(const pair<T, U> &x) const {
+            array<unsigned int, 2> arr({(unsigned int)x.first, (unsigned int)x.second});
+            return boost::hash_range(arr.begin(), arr.end());
+        }
+
+        template<typename T, typename U>
+        bool operator()(const pair<T, U> &x, const pair<T, U> &other) const {
+            array<unsigned int, 2> arr({(unsigned int)x.first, (unsigned int)x.second});
+            size_t x_hash = boost::hash_range(arr.begin(), arr.end());
+
+            array<unsigned int, 2> arr_other({(unsigned int)other.first, (unsigned int)other.second});
+            size_t other_hash = boost::hash_range(arr_other.begin(), arr_other.end());
+
+            return other_hash != x_hash;
         }
     };
+
+//    struct nTensorOutput {
+//        nTensorOutput(const unsigned int &n,
+//                      const nTensorOutputFlag &flag)
+//                : n(n), flag(flag) {};
+//
+//        const unsigned int n;
+//        const nTensorOutputFlag flag;
+//    };
+
+//    struct nTensorOutputHash {
+//        size_t operator()(const nTensorOutput &other) const {
+//            return hash<unsigned int>()(other.n) ^ hash<nTensorOutputFlag>()(other.flag);
+//        }
+//    };
+
+
 }
 
 

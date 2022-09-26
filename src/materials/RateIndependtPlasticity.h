@@ -243,7 +243,7 @@ private:
     void set_e_law_state() { elastic_law->set_state(state->get_elastic_component()); };
 
     template<class T>
-    T mid_step(const T &in_n, const T &in_n1) const { return alpha * in_n1 + (1 - alpha) * in_n; };
+    T mid_step(const T &in_n, const T &in_n1) const { return alpha * in_n1 + (1 - alpha) * in_n; }
 
 //    void initialize_cross_yield();
 

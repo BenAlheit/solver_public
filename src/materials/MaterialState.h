@@ -78,7 +78,7 @@ public:
                 return get_B_eig(2);
             default:
                 throw NotImplemented(
-                        "vector_output is not implemented for flag '" + to_string<dim>(flag) + "' for this material state.");
+                        "vector_output is not implemented for flag '" + to_string<dim>(flag).at(0) + "' for this material state.");
         }
     };
 
@@ -94,7 +94,7 @@ public:
                 return tau_n1 * invert(transpose(F_n1));
             default:
                 throw NotImplemented(
-                        "tensor_output is not implemented for flag '" + to_string<dim>(flag) + "' for this material state.");
+                        "tensor_output is not implemented for flag '" + to_string<dim>(flag).at(0) + "' for this material state.");
         }
     };
 
@@ -105,12 +105,12 @@ public:
 
     virtual Tensor<1, dim> n_vector_output(const nVectorOutputFlag & flag, const unsigned int& i){
         throw NotImplemented(
-                "'n_vector_output' is not implemented for flag '" + to_string<dim>(flag, i) + "' for this material state.");
+                "'n_vector_output' is not implemented for flag '" + to_string<dim>(flag, i).at(0) + "' for this material state.");
     };
 
     virtual Tensor<2, dim> n_tensor_output(const nTensorOutputFlag & flag, const unsigned int& i){
         throw NotImplemented(
-                "'n_tensor_output' is not implemented for flag '" + to_string<dim>(flag, i) + "' for this material state.");
+                "'n_tensor_output' is not implemented for flag '" + to_string<dim>(flag, i).at(0) + "' for this material state.");
     };
 
     Tensor<2, dim> F_n;

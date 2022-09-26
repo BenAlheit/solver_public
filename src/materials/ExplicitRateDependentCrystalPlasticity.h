@@ -26,13 +26,13 @@ public:
     CrystalPlasticityState(const unsigned int &n,
                            const vector<double> &ref_euler_angles = vector<double>(0, dim))
             : KronnerDecomp<dim>(), n(n), Fp_n(Physics::Elasticity::StandardTensors<dim>::I),
-              Fp_n1(Physics::Elasticity::StandardTensors<dim>::I), ref_s(n), ref_m(n), nu_n(n), nu_n1(n), ta_n(n),
+              Fp_n1(Physics::Elasticity::StandardTensors<dim>::I), ref_s(n), ref_m(n), ref_sys(n), nu_n(n), nu_n1(n), ta_n(n),
               ta_n1(n), H_n(n), H_n1(n), ref_euler_angles(ref_euler_angles) {};
 
 
     CrystalPlasticityState(CrystalPlasticityState<dim> *to_cpy)
             : KronnerDecomp<dim>(to_cpy), n(to_cpy->n), Fp_n(to_cpy->Fp_n), Fp_n1(to_cpy->Fp_n1), ref_s(to_cpy->ref_s),
-              ref_m(to_cpy->ref_m), nu_n(to_cpy->nu_n), nu_n1(to_cpy->nu_n1), ta_n(to_cpy->ta_n), ta_n1(to_cpy->ta_n1),
+              ref_m(to_cpy->ref_m), ref_sys(to_cpy->ref_sys), nu_n(to_cpy->nu_n), nu_n1(to_cpy->nu_n1), ta_n(to_cpy->ta_n), ta_n1(to_cpy->ta_n1),
               H_n(to_cpy->H_n), H_n1(to_cpy->H_n1), ref_euler_angles(to_cpy->ref_euler_angles) {};
 
 
@@ -46,6 +46,7 @@ public:
         this->ref_euler_angles = to_cpy->ref_euler_angles;
         this->ref_s = to_cpy->ref_s;
         this->ref_m = to_cpy->ref_m;
+        this->ref_sys = to_cpy->ref_sys;
 
         this->Fp_n = to_cpy->Fp_n;
         this->nu_n = to_cpy->nu_n;
@@ -95,7 +96,12 @@ public:
     };
 
     double scalar_output(ScalarOutputFlag flag) override {
-        return StateBase<dim>::scalar_output(flag);
+        switch (flag) {
+            case ScalarOutputFlag::ELASTIC_STRAIN_ENERGY:
+                return this->elastic_component->elastic_strain_energy_n1;
+            default:
+                return StateBase<dim>::scalar_output(flag);
+        }
     };
 
     Tensor<1, dim> vector_output(VectorOutputFlag flag) override {
@@ -103,7 +109,14 @@ public:
     };
 
     Tensor<2, dim> tensor_output(TensorOutputFlag flag) override {
-        return StateBase<dim>::tensor_output(flag);
+        switch (flag) {
+            case TensorOutputFlag::FP:
+                return Fp_n1;
+            case TensorOutputFlag::FE:
+                return this->elastic_component->F_n1;
+            default:
+                return StateBase<dim>::tensor_output(flag);
+        }
     };
 
     double n_scalar_output(const nScalarOutputFlag & flag, const unsigned int& i) override {
@@ -176,12 +189,17 @@ protected:
         Ry[2][0] = -sin(to_radians(ref_euler_angles.at(1)));
 
 
-        Rx[0][0] = cos(to_radians(ref_euler_angles.at(2)));
-        Rx[1][1] = cos(to_radians(ref_euler_angles.at(2));
-        Rx[0][1] = -sin(to_radians(ref_euler_angles.at(2)));
-        Rx[1][0] = sin(to_radians(ref_euler_angles.at(2)));
+        Rz[0][0] = cos(to_radians(ref_euler_angles.at(2)));
+        Rz[1][1] = cos(to_radians(ref_euler_angles.at(2)));
+        Rz[0][1] = -sin(to_radians(ref_euler_angles.at(2)));
+        Rz[1][0] = sin(to_radians(ref_euler_angles.at(2)));
 
         ref_rotation_matrix = Rz * Ry * Rx;
+
+        for (unsigned int alpha = 0; alpha < n ; ++alpha) {
+            ref_s.at(alpha) /= ref_s.at(alpha).norm();
+            ref_m.at(alpha) /= ref_m.at(alpha).norm();
+        }
 
         for (unsigned int alpha = 0; alpha < n ; ++alpha) {
             ref_s.at(alpha) = ref_rotation_matrix * ref_s.at(alpha);
@@ -193,12 +211,113 @@ protected:
 };
 
 template<unsigned int dim>
-class SingleSlipCrystalPlasticityState : CrystalPlasticityState<dim>{
-//    TODO
-//    TODO
-//    TODO
-//    TODO
-//    TODO
+class SingleSlipCrystalPlasticityState : public CrystalPlasticityState<dim>{
+public:
+    SingleSlipCrystalPlasticityState(const vector<double> &ref_euler_angles = vector<double>(0, dim))
+    : CrystalPlasticityState<dim>(1, ref_euler_angles) {
+        this->ref_s.at(0) = Tensor<1, dim>({1, 0, 0});
+        this->ref_m.at(0) = Tensor<1, dim>({0, 1, 0});
+
+        this->initialize();
+    }
+
+
+    const unsigned int n = 1;
+};
+
+template<unsigned int dim>
+class DoubleSlipCrystalPlasticityState : public CrystalPlasticityState<dim>{
+public:
+    DoubleSlipCrystalPlasticityState(const vector<double> &sys2_euler_angles = vector<double>({90, 0, 0}),
+                                     const vector<double> &ref_euler_angles = vector<double>(0, dim))
+    : CrystalPlasticityState<dim>(2, ref_euler_angles) {
+        this->ref_s.at(0) = Tensor<1, dim>({1, 0, 0});
+        this->ref_m.at(0) = Tensor<1, dim>({0, 1, 0});
+
+        this->ref_s.at(1) = Tensor<1, dim>({1, 0, 0});
+        this->ref_m.at(1) = Tensor<1, dim>({0, 1, 0});
+
+        const SymmetricTensor<2, dim> & I_ref = Physics::Elasticity::StandardTensors<dim>::I;
+        Tensor<2, dim> Rx(I_ref), Ry(I_ref), Rz(I_ref), ref_rotation_matrix;
+
+        Rx[1][1] = cos(to_radians(ref_euler_angles.at(0)));
+        Rx[2][2] = cos(to_radians(ref_euler_angles.at(0)));
+        Rx[1][2] = -sin(to_radians(ref_euler_angles.at(0)));
+        Rx[2][1] = sin(to_radians(ref_euler_angles.at(0)));
+
+        Ry[0][0] = cos(to_radians(ref_euler_angles.at(1)));
+        Ry[2][2] = cos(to_radians(ref_euler_angles.at(1)));
+        Ry[0][2] = sin(to_radians(ref_euler_angles.at(1)));
+        Ry[2][0] = -sin(to_radians(ref_euler_angles.at(1)));
+
+
+        Rx[0][0] = cos(to_radians(ref_euler_angles.at(2)));
+        Rx[1][1] = cos(to_radians(ref_euler_angles.at(2)));
+        Rx[0][1] = -sin(to_radians(ref_euler_angles.at(2)));
+        Rx[1][0] = sin(to_radians(ref_euler_angles.at(2)));
+
+        ref_rotation_matrix = Rz * Ry * Rx;
+
+        this->ref_s.at(1) = ref_rotation_matrix * this->ref_s.at(1);
+        this->ref_m.at(1) = ref_rotation_matrix * this->ref_m.at(1);
+
+        this->initialize();
+    }
+
+
+    const unsigned int n = 2;
+};
+
+template<unsigned int dim>
+class FCCState : public CrystalPlasticityState<dim>{
+public:
+    FCCState(const vector<double> &ref_euler_angles = vector<double>(0, dim))
+            : CrystalPlasticityState<dim>(12, ref_euler_angles) {
+//      Slip plane <1 1 1>
+        this->ref_m.at(0) = Tensor<1, dim>({1, 1, 1});
+        this->ref_s.at(0) = Tensor<1, dim>({1, -1, 0});
+
+        this->ref_m.at(1) = Tensor<1, dim>({1, 1, 1});
+        this->ref_s.at(1) = Tensor<1, dim>({0, 1, -1});
+
+        this->ref_m.at(2) = Tensor<1, dim>({1, 1, 1});
+        this->ref_s.at(2) = Tensor<1, dim>({1, 0, -1});
+
+//      Slip plane <\bar{1} 1 1>
+        this->ref_m.at(3) = Tensor<1, dim>({-1, 1, 1});
+        this->ref_s.at(3) = Tensor<1, dim>({1, 1, 0});
+
+        this->ref_m.at(4) = Tensor<1, dim>({-1, 1, 1});
+        this->ref_s.at(4) = Tensor<1, dim>({0, 1, -1});
+
+        this->ref_m.at(5) = Tensor<1, dim>({-1, 1, 1});
+        this->ref_s.at(5) = Tensor<1, dim>({1, 0, 1});
+
+//      Slip plane <1 1 \bar{1}>
+        this->ref_m.at(6) = Tensor<1, dim>({1, 1, -1});
+        this->ref_s.at(6) = Tensor<1, dim>({1, -1, 0});
+
+        this->ref_m.at(7) = Tensor<1, dim>({1, 1, -1});
+        this->ref_s.at(7) = Tensor<1, dim>({0, 1, 1});
+
+        this->ref_m.at(8) = Tensor<1, dim>({1, 1, -1});
+        this->ref_s.at(8) = Tensor<1, dim>({1, 0, 1});
+
+//       Slip plane <1 \bar{1} 1>
+        this->ref_m.at(9) = Tensor<1, dim>({1, -1, 1});
+        this->ref_s.at(9) = Tensor<1, dim>({1, 1, 0});
+
+        this->ref_m.at(10) = Tensor<1, dim>({1, -1, 1});
+        this->ref_s.at(10) = Tensor<1, dim>({0, 1, 1});
+
+        this->ref_m.at(11) = Tensor<1, dim>({1, -1, 1});
+        this->ref_s.at(11) = Tensor<1, dim>({1, 0, -1});
+
+        this->initialize();
+    }
+
+
+    const unsigned int n = 12;
 };
 
 template<unsigned int dim>
@@ -231,8 +350,9 @@ public:
     void set_state(StateBase<dim> *new_ptr) override { this->state = dynamic_cast<state_type *>(new_ptr); };
 
     StateBase<dim> *create_state() const override {
-        return dynamic_cast<StateBase<dim> *>(new state_type(state->n,
-                                                             state->ref_euler_angles));
+//        return dynamic_cast<StateBase<dim> *>(new state_type(state->n,
+//                                                             state->ref_euler_angles));
+        return dynamic_cast<StateBase<dim> *>(new state_type(state));
     }
 
 private:

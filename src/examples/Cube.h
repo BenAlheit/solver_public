@@ -22,7 +22,7 @@ using namespace dealii;
 template<unsigned int dim>
 class Cube {
 public:
-    explicit Cube(unsigned int n_refinements = 2);
+    explicit Cube(unsigned int n_refinements = 1);
 
     Triangulation<dim> triangulation;
     map<unsigned int, Material<dim> *> materials;
@@ -47,7 +47,7 @@ Cube<dim>::Cube(unsigned int n_refinements) : n_refinements(n_refinements) {
     iota(range.begin(), range.end(), 0);
 
     make_mesh();
-    string name = "elastic-cube";
+    string name = "parallel-elastic-cube";
     const double kappa = 44.12e3;
     const double mu = 16.92e3;
     materials[/*material id*/ 0] = new NeoHookean<dim>(/*material id*/ 0, kappa, mu);

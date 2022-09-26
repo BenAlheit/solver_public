@@ -23,6 +23,7 @@
 #include "examples/cube-with-sphere/CubeWithSphere.h"
 #include "examples/cube-with-sphere/CubeWithSpherePBC.h"
 #include "examples/cube-with-sphere/ViscoplasticCubeWithSpherePBC.h"
+#include "examples/cube-with-sphere/ViscoCrystalplasticCubeWithSpherePBC.h"
 
 #include "examples/polycrystal/PolycrystalPBC.h"
 #include "examples/polycrystal-imp/PolycrystalIMPPBC.h"
@@ -33,8 +34,9 @@
 // TODO Documentation
 // TODO Documentation
 
-// TODO Viscocrystalplastic material
-// TODO Fix parallelization
+// TODO Parallelize output (ignore ghosting for now)
+// TODO Make parallelization better (ghost dofs, add periodicity)
+// TODO Use VectorTools for projection (actually maybe not)
 
 int main(int argc, char **argv){
 //    MultithreadInfo::set_thread_limit(1);
@@ -48,29 +50,29 @@ int main(int argc, char **argv){
 //    PSC<dim> problem = PSC<dim>();
 
 
-//    CubeWithIMP<dim> problem = CubeWithIMP<dim>();
+//    auto problem = CubeWithIMP<dim>();
 
-//    PolycrystalPBC<dim> problem = PolycrystalPBC<dim>();
-//    PolycrystalIMPPBC<dim> problem = PolycrystalIMPPBC<dim>();
+//    auto problem = PolycrystalPBC<dim>();
+//    auto problem = PolycrystalIMPPBC<dim>();
+
+//    auto problem = CheckApproximateTangentElastic<dim>();
+//    auto problem = CheckApproximateTangentViscoelastic<dim>();
+
+//    auto problem = ElastoPlasticCube<dim>();
+//    auto problem = QuarterCylinder<dim>();
+//    auto problem = NeckingCylinder<dim>();
 
 
-//    CheckApproximateTangentElastic<dim> problem = CheckApproximateTangentElastic<dim>();
-//    CheckApproximateTangentViscoelastic<dim> problem = CheckApproximateTangentViscoelastic<dim>();
+//    auto problem = ElasticCyclicalTensionCompression<dim>();
+//    auto problem = ViscoCyclicalTensionCompression<dim>();
+//    auto problem = ExplicitRateDependentPlasticityCyclicalTensionCompression<dim>();
+//    auto problem = ExplicitRateDependentCrystalPlasticityCyclicalTensionCompression<dim>();
 
-//    ElastoPlasticCube<dim> problem = ElastoPlasticCube<dim>();
-//    QuarterCylinder<dim> problem = QuarterCylinder<dim>();
-//    NeckingCylinder<dim> problem = NeckingCylinder<dim>();
-
-
-//    ElasticCyclicalTensionCompression<dim> problem = ElasticCyclicalTensionCompression<dim>();
-//    ViscoCyclicalTensionCompression<dim> problem = ViscoCyclicalTensionCompression<dim>();
-//    ExplicitRateDependentPlasticityCyclicalTensionCompression<dim> problem
-//    = ExplicitRateDependentPlasticityCyclicalTensionCompression<dim>();
-
-//    Cube<dim> problem = Cube<dim>();
-//    CubeWithSphere<dim> problem = CubeWithSphere<dim>();
-//    CubeWithSpherePBC<dim> problem = CubeWithSpherePBC<dim>();
-    ViscoplasticCubeWithSpherePBC<dim> problem = ViscoplasticCubeWithSpherePBC<dim>();
+//    auto problem = Cube<dim>();
+//    auto problem = CubeWithSphere<dim>();
+//    auto problem = CubeWithSpherePBC<dim>();
+//    auto problem = ViscoplasticCubeWithSpherePBC<dim>();
+    auto problem = ViscoCrystalplasticCubeWithSpherePBC<dim>();
 
 
 //    ElasticProblem<2> elastic_problem;

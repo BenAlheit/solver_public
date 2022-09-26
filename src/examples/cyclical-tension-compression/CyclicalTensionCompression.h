@@ -26,6 +26,9 @@ public:
                                const unsigned int &n_steps,
                                const unsigned int &n_out,
                                const vector<double> &dts,
+                               const map<nScalarOutput, vector<unsigned int>, nOutputHash> & n_scalar_outputs = {},
+                               const map<nVectorOutput, vector<unsigned int>, nOutputHash> & n_vector_outputs = {},
+                               const map<nTensorOutput, vector<unsigned int>, nOutputHash> & n_tensor_outputs = {},
                                const unsigned int &order = 1,
                                const unsigned int &n_refinements = 2);
 
@@ -55,6 +58,9 @@ CyclicalTensionCompression<dim>::CyclicalTensionCompression(const string &name,
                                                             const unsigned int &n_steps,
                                                             const unsigned int &n_out,
                                                             const vector<double> &dts,
+                                                            const map<nScalarOutput, vector<unsigned int>, nOutputHash> & n_scalar_outputs,
+                                                            const map<nVectorOutput, vector<unsigned int>, nOutputHash> & n_vector_outputs,
+                                                            const map<nTensorOutput, vector<unsigned int>, nOutputHash> & n_tensor_outputs,
                                                             const unsigned int &order,
                                                             const unsigned int &n_refinements)
         : name(name), n_steps(n_steps), n_out(n_out), extension(extension), compression(compression), dts(dts),
@@ -123,7 +129,13 @@ CyclicalTensionCompression<dim>::CyclicalTensionCompression(const string &name,
                                 mesh_outputs,
                                 averaged_scalar_outputs,
                                 {},
-                                averaged_tensor_outputs));
+                                averaged_tensor_outputs,
+                                dts.at(0),
+                                n_steps,
+                                n_out,
+                                n_scalar_outputs,
+                                n_vector_outputs,
+                                n_tensor_outputs));
 
     double end_time = dts.at(0);
     for (unsigned int i = 1; i < dts.size(); ++i) {
@@ -141,7 +153,10 @@ CyclicalTensionCompression<dim>::CyclicalTensionCompression(const string &name,
                                         averaged_tensor_outputs,
                                         end_time,
                                         n_steps,
-                                        n_out));
+                                        n_out,
+                                        n_scalar_outputs,
+                                        n_vector_outputs,
+                                        n_tensor_outputs));
         } else { //compression
             stages.push_back(Stage<dim>(&time,
                                         compression_dbcs,
@@ -155,7 +170,10 @@ CyclicalTensionCompression<dim>::CyclicalTensionCompression(const string &name,
                                         averaged_tensor_outputs,
                                         end_time,
                                         n_steps,
-                                        n_out));
+                                        n_out,
+                                        n_scalar_outputs,
+                                        n_vector_outputs,
+                                        n_tensor_outputs));
         }
     }
 

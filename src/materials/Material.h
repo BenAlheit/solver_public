@@ -14,9 +14,8 @@ using namespace std;
 template<unsigned int dim>
 class Material {
 public:
-    Material(unsigned int id,
-             const Tensor<2, dim> &orientation = Physics::Elasticity::StandardTensors<dim>::I)
-            : id(id), orientation(orientation) {
+    Material(unsigned int id)
+            : id(id) {
         iota(dim_range.begin(), dim_range.end(), 0);
         for (const auto &i: dim_range)
             for (const auto &j: dim_range)
@@ -113,9 +112,8 @@ void Material<dim>::approximate_tangent(const double &dt,
 template<unsigned int dim>
 class ElasticMaterial : public Material<dim> {
 public:
-    explicit ElasticMaterial(unsigned int id,
-                             const Tensor<2, dim> &orientation = Physics::Elasticity::StandardTensors<dim>::I)
-            : Material<dim>(id, orientation) {};
+    explicit ElasticMaterial(unsigned int id)
+            : Material<dim>(id) {};
 
     typedef ElasticState<dim> state_type;
 
