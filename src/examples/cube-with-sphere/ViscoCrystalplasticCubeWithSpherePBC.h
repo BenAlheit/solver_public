@@ -82,7 +82,7 @@ ViscoCrystalplasticCubeWithSpherePBC<dim>::ViscoCrystalplasticCubeWithSpherePBC(
 
     unsigned int n_steps = 200;
     unsigned int n_out = 25;
-    double mag = -0.3;
+    double mag = -0.25;
 
     time = Time(/*end_time*/ 1,
                              n_steps,
