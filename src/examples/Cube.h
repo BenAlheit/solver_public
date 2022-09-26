@@ -52,9 +52,13 @@ Cube<dim>::Cube(unsigned int n_refinements) : n_refinements(n_refinements) {
     const double mu = 16.92e3;
     materials[/*material id*/ 0] = new NeoHookean<dim>(/*material id*/ 0, kappa, mu);
 
-    unsigned int n_steps = 50;
-    unsigned int n_out = 25;
-    double pull = 1.;
+//    unsigned int n_steps = 50;
+//    unsigned int n_out = 25;
+//    double pull = 1.;
+
+    unsigned int n_steps = 1;
+    unsigned int n_out = 1;
+    double pull = 0.01;
 
     time = Time(/*end_time*/ 1,
                              n_steps,

@@ -41,12 +41,8 @@ namespace Solver {
     class Solver {
     public:
         explicit Solver(Problem<dim> *problem)
-                : problem(problem)
-//                , locally_owned_dofs_per_proc(
-//                        DoFTools::locally_owned_dofs_per_subdomain(problem->get_mesh()->get_dof_handler()))
-//                , locally_owned_dofs(locally_owned_dofs_per_proc[problem->get_mesh()->get_this_mpi_processes()])
-                , dsp(problem->get_mesh()->get_dof_handler().n_dofs(),
-                      problem->get_mesh()->get_dof_handler().n_dofs()) {
+                : problem(problem), dsp(problem->get_mesh()->get_dof_handler().n_dofs(),
+                                        problem->get_mesh()->get_dof_handler().n_dofs()) {
             iota(range.begin(), range.end(), 0);
 
             output_dir_name = "./" + problem->get_name() + "/";
@@ -63,17 +59,17 @@ namespace Solver {
             locally_owned_dofs.print(cout);
             cout << "Process " << problem->get_mesh()->get_this_mpi_processes() << " locally relevant dofs: " << endl;
             locally_relevant_dofs.print(cout);
-//            << locally_owned_dofs << endl;
 
             u.reinit(locally_owned_dofs,
-//                     locally_relevant_dofs,
                      problem->get_mesh()->get_mpi_communicator());
             du.reinit(locally_owned_dofs,
-//                      locally_relevant_dofs,
                       problem->get_mesh()->get_mpi_communicator());
 
+            locally_relevant_u.reinit(locally_owned_dofs,
+                                      locally_relevant_dofs,
+                                      problem->get_mesh()->get_mpi_communicator());
+
             system_rhs.reinit(locally_owned_dofs,
-//                              locally_relevant_dofs,
                               problem->get_mesh()->get_mpi_communicator());
             u = 0;
             du = 0;
@@ -99,12 +95,6 @@ namespace Solver {
 
 
         void output_results() const;
-//        void output_results_old() const;
-
-//        MPI_Comm mpi_communicator;
-//
-//        const unsigned int n_mpi_processes;
-//        const unsigned int this_mpi_process;
 
         string output_dir_name;
         Problem<dim> *problem;
@@ -125,13 +115,13 @@ namespace Solver {
 
         PETScWrappers::MPI::Vector du;
         PETScWrappers::MPI::Vector u;
+        PETScWrappers::MPI::Vector locally_relevant_u;
         PETScWrappers::MPI::Vector system_rhs;
+
     };
 
     template<unsigned int dim>
     bool Solver<dim>::init_step(bool init_solve) {
-//        DynamicSparsityPattern dsp(problem->get_mesh()->get_dof_handler().n_dofs(),
-//                                   problem->get_mesh()->get_dof_handler().n_dofs());
 
         bool output = problem->step(du_constraints);
         du = 0;
@@ -141,27 +131,18 @@ namespace Solver {
                                         du_constraints,
                                         false);
 
-//        const vector<IndexSet> locally_owned_dofs_per_proc = DoFTools::locally_owned_dofs_per_subdomain(problem->get_mesh()->get_dof_handler());
-//        const IndexSet locally_owned_dofs = locally_owned_dofs_per_proc[problem->get_mesh()->get_this_mpi_processes()];
-
         system_matrix.reinit(locally_owned_dofs,
                              locally_owned_dofs,
                              dsp,
                              problem->get_mesh()->get_mpi_communicator());
 
         assemble_system(true, init_solve);
+        double solver_res = 1e-8 * system_rhs.l2_norm();
 
-        double solver_res;
-        if (init_solve) {
-            solver_res = 1e-8 * system_rhs.l2_norm();
-        } else {
-            solver_res = 1e-8 * system_rhs.l2_norm();
-        }
         SolverControl solver_control(5000, solver_res);
 
 //        PETScWrappers::SolverCG cg(solver_control,
 //                                   this->problem->get_mesh()->get_mpi_communicator());
-
         PETScWrappers::SolverGMRES cg(solver_control,
                                       this->problem->get_mesh()->get_mpi_communicator());
 
@@ -180,9 +161,6 @@ namespace Solver {
         du_constraints.close();
         du_constraints.template distribute(du);
 
-//        du.update_ghost_values();
-//        u.update_ghost_values();
-
         return output;
     }
 
@@ -192,13 +170,16 @@ namespace Solver {
         system_matrix = 0.0;
         system_rhs = 0.0;
 
-        const Vector<double> localized_solution(u);
+        u.compress(VectorOperation::unknown);
+        locally_relevant_u = u;
+
+//        const Vector<double> localized_solution(u);
 
         FullMatrix<double> cell_matrix(problem->get_mesh()->get_dofs_per_cell(),
                                        problem->get_mesh()->get_dofs_per_cell());
         Vector<double> cell_rhs(problem->get_mesh()->get_dofs_per_cell());
 
-//        vector<types::global_dof_index> local_dof_indices(problem->get_mesh()->get_dofs_per_cell());
+
         StateBase<dim> *qp_state;
         Material<dim> *material;
         array<unsigned int, dim> i_node_local_dofs, j_node_local_dofs;
@@ -217,13 +198,15 @@ namespace Solver {
 
         Vector<double> local_u;
         local_u.reinit(problem->get_mesh()->get_dofs_per_cell());
+        vector<PetscScalar> std_local_u(problem->get_mesh()->get_dofs_per_cell());
 
         for (const auto &cell: problem->get_mesh()->get_locally_relevant_elements()) {
             cell_matrix = 0;
             cell_rhs = 0;
 
+            locally_relevant_u.extract_subvector_to(cell.local_dof_indices, std_local_u);
             for (const auto &i_dof: problem->get_mesh()->get_dof_range())
-                local_u[i_dof] = localized_solution[cell.local_dof_indices.at(i_dof)];
+                local_u[i_dof] = (double) std_local_u.at(i_dof);
 
             for (const auto &qp: problem->get_mesh()->get_qp_range()) {
                 JxW = cell.JxWs.at(qp);
@@ -243,7 +226,6 @@ namespace Solver {
                 sym_tau = symmetrize(qp_state->tau_n1);
 
                 ref_grad_phis = cell.grad_shape_fns.at(qp);
-//                    vector<Tensor<1, dim>> ref_grad_phis_comp = problem->get_mesh()->get_grad_shape_fns(cell.cell_ptr->level(), cell.cell_ptr->index(), qp);
                 for (const auto &i_node: problem->get_mesh()->get_local_nodes())
                     spatial_grad_phis.at(i_node) = ref_grad_phis.at(i_node) * F_inv;
 
@@ -323,22 +305,14 @@ namespace Solver {
                                           this->problem->get_mesh()->get_mpi_communicator());
             PETScWrappers::PreconditionBlockJacobi preconditioner(system_matrix);
             cg.solve(system_matrix, du, system_rhs, preconditioner);
-//            du.update_ghost_values();
 
-            Vector<double> global_du(du);
+//            Vector<double> global_du(du);
 
-//            du_constraints.template distribute(du);
-            du_constraints.template distribute(global_du);
-
-
-            du = global_du;
-//            du.update_ghost_values();
-
-            du *= 0.95;
-//            du.update_ghost_values();
+            du_constraints.template distribute(du);
+//            du_constraints.template distribute(global_du);
+//            du = global_du;
 
             u += du;
-//            u.update_ghost_values();
         }
     }
 
