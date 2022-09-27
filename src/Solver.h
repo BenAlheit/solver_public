@@ -25,6 +25,8 @@
 
 #include <deal.II/numerics/data_out.h>
 
+#include <deal.II/lac/generic_linear_algebra.h>
+
 #include <mpi.h>
 #include <fstream>
 
@@ -35,6 +37,7 @@
 
 namespace Solver {
     using namespace dealii;
+//    using namespace dealii::LinearAlgebraPETSc;
     using namespace std;
 
     template<unsigned int dim>
@@ -141,12 +144,17 @@ namespace Solver {
 
         SolverControl solver_control(5000, solver_res);
 
-//        PETScWrappers::SolverCG cg(solver_control,
-//                                   this->problem->get_mesh()->get_mpi_communicator());
-        PETScWrappers::SolverGMRES cg(solver_control,
-                                      this->problem->get_mesh()->get_mpi_communicator());
+        PETScWrappers::SolverCG cg(solver_control,
+                                   this->problem->get_mesh()->get_mpi_communicator());
+//        PETScWrappers::SolverGMRES cg(solver_control,
+//                                      this->problem->get_mesh()->get_mpi_communicator());
 
         PETScWrappers::PreconditionBlockJacobi preconditioner(system_matrix);
+
+//        LinearAlgebraPETSc::MPI::PreconditionAMG preconditioner;
+//        LinearAlgebraPETSc::MPI::PreconditionAMG::AdditionalData data;
+//        preconditioner.initialize(system_matrix, data);
+
         cg.solve(system_matrix, du, system_rhs, preconditioner);
         du_constraints.template distribute(du);
         u += du;
@@ -172,8 +180,6 @@ namespace Solver {
 
         u.compress(VectorOperation::unknown);
         locally_relevant_u = u;
-
-//        const Vector<double> localized_solution(u);
 
         FullMatrix<double> cell_matrix(problem->get_mesh()->get_dofs_per_cell(),
                                        problem->get_mesh()->get_dofs_per_cell());
@@ -299,18 +305,19 @@ namespace Solver {
             problem->get_mesh()->get_pcout() << "Iteration: " << it << "\t residual norm: " << system_rhs.l2_norm()
                                              << endl;
             SolverControl solver_control(u.size(), 1e-8 * system_rhs.l2_norm());
-//        PETScWrappers::SolverCG cg(solver_control,
-//                                   this->problem->get_mesh()->get_mpi_communicator());
-            PETScWrappers::SolverGMRES cg(solver_control,
-                                          this->problem->get_mesh()->get_mpi_communicator());
+        PETScWrappers::SolverCG cg(solver_control,
+                                   this->problem->get_mesh()->get_mpi_communicator());
+//            PETScWrappers::SolverGMRES cg(solver_control,
+//                                          this->problem->get_mesh()->get_mpi_communicator());
             PETScWrappers::PreconditionBlockJacobi preconditioner(system_matrix);
+
+//            LinearAlgebraPETSc::MPI::PreconditionAMG preconditioner;
+//            LinearAlgebraPETSc::MPI::PreconditionAMG::AdditionalData data;
+//            preconditioner.initialize(system_matrix, data);
+
             cg.solve(system_matrix, du, system_rhs, preconditioner);
 
-//            Vector<double> global_du(du);
-
             du_constraints.template distribute(du);
-//            du_constraints.template distribute(global_du);
-//            du = global_du;
 
             u += du;
         }

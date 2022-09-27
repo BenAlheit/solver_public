@@ -141,24 +141,9 @@ namespace OutputFlags {
 
     typedef pair<nScalarOutputFlag, unsigned int> nScalarOutput;
 
-//    struct nScalarOutput {
-//        nScalarOutput(const unsigned int &n,
-//                      const nScalarOutputFlag &flag)
-//                : n(n), flag(flag) {};
-//
-//        const unsigned int n;
-//        const nScalarOutputFlag flag;
-//
-//    };
-//
-//    struct nScalarOutputHash {
-//        size_t operator()(const nScalarOutput &other) const {
-//            return hash<unsigned int>()(other.n) ^ hash<nScalarOutputFlag>()(other.flag);
-//        }
-//    };
 
     enum class nVectorOutputFlag {
-        M, S
+        M, S, CRYSTAL_BASIS
     };
 
     template<unsigned int dim>
@@ -168,6 +153,8 @@ namespace OutputFlags {
                 return create_string_vector_for_vector<dim>("System_normal_" + std::to_string(i));
             case nVectorOutputFlag::S:
                 return create_string_vector_for_vector<dim>("System_slip_" + std::to_string(i));
+            case nVectorOutputFlag::CRYSTAL_BASIS:
+                return create_string_vector_for_vector<dim>("Crystal_basis_" + std::to_string(i));
             default:
                 throw NotImplemented("to_string function not implemented for this nVectorOutputFlag");
         }
@@ -175,20 +162,6 @@ namespace OutputFlags {
 
     typedef pair<nVectorOutputFlag, unsigned int> nVectorOutput;
 
-//    struct nVectorOutput {
-//        nVectorOutput(const unsigned int &n,
-//                      const nVectorOutputFlag &flag)
-//                : n(n), flag(flag) {};
-//
-//        const unsigned int n;
-//        const nVectorOutputFlag flag;
-//    };
-//
-//    struct nVectorOutputHash {
-//        size_t operator()(const nVectorOutput &this_out, const nVectorOutput &other) const {
-//            return hash<unsigned int>()(other.n) ^ hash<nVectorOutputFlag>()(other.flag);
-//        }
-//    };
 
     enum class nTensorOutputFlag {
         SYS
@@ -226,21 +199,6 @@ namespace OutputFlags {
             return other_hash != x_hash;
         }
     };
-
-//    struct nTensorOutput {
-//        nTensorOutput(const unsigned int &n,
-//                      const nTensorOutputFlag &flag)
-//                : n(n), flag(flag) {};
-//
-//        const unsigned int n;
-//        const nTensorOutputFlag flag;
-//    };
-
-//    struct nTensorOutputHash {
-//        size_t operator()(const nTensorOutput &other) const {
-//            return hash<unsigned int>()(other.n) ^ hash<nTensorOutputFlag>()(other.flag);
-//        }
-//    };
 
 
 }

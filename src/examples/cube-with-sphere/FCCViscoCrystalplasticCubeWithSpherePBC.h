@@ -1,5 +1,5 @@
-#ifndef SOLVER_VISCOCRYSTALPLASTICCUBEWITHSPHEREPBC_H
-#define SOLVER_VISCOCRYSTALPLASTICCUBEWITHSPHEREPBC_H
+#ifndef SOLVER_FCCVISCOCRYSTALPLASTICCUBEWITHSPHEREPBC_H
+#define SOLVER_FCCVISCOCRYSTALPLASTICCUBEWITHSPHEREPBC_H
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
@@ -19,9 +19,9 @@ using namespace dealii;
 
 
 template<unsigned int dim>
-class ViscoCrystalplasticCubeWithSpherePBC {
+class FCCViscoCrystalplasticCubeWithSpherePBC {
 public:
-    explicit ViscoCrystalplasticCubeWithSpherePBC(unsigned int n_refinements = 2);
+    explicit FCCViscoCrystalplasticCubeWithSpherePBC(unsigned int n_refinements = 2);
 
     Triangulation<dim> triangulation;
     map<unsigned int, Material<dim> *> materials;
@@ -43,7 +43,7 @@ private:
 };
 
 template<unsigned int dim>
-ViscoCrystalplasticCubeWithSpherePBC<dim>::ViscoCrystalplasticCubeWithSpherePBC(unsigned int n_refinements):
+FCCViscoCrystalplasticCubeWithSpherePBC<dim>::FCCViscoCrystalplasticCubeWithSpherePBC(unsigned int n_refinements):
         n_refinements(n_refinements) {
 
     iota(range.begin(), range.end(), 0);
@@ -54,19 +54,22 @@ ViscoCrystalplasticCubeWithSpherePBC<dim>::ViscoCrystalplasticCubeWithSpherePBC(
     const double mu = 16.92e3;
     auto elastic_base = new NeoHookean<dim>(/*material id*/ 0, kappa, mu);
 
-    const unsigned int n_sys = 1;
+    const unsigned int n_sys = 12;
     const double visc = 500;
     const double m = 0.5;
     const double sig_y = 60;
     const double q = 0.5;
-    const double rot_deg = 90;
+    const double rot_deg_z = 45;
+    const double rot_deg_x = 0;
 
-    const string name = "vcp-1-cube-particle-psc-"+ to_string((int)rot_deg)+"-deg";
+    const string name = "fcc-vcp-cube-particle-psc-"+ to_string((int)rot_deg_z)+"-Zdeg-"+ to_string((int)rot_deg_x)+"-Xdeg";
 
     vector<double> ref_euler_angles(dim, 0);
-    ref_euler_angles.at(2) = rot_deg;
+    ref_euler_angles.at(0) = rot_deg_x;
+    ref_euler_angles.at(2) = rot_deg_z;
 
-    auto example_state = new SingleSlipCrystalPlasticityState<dim>(ref_euler_angles);
+//    auto example_state = new SingleSlipCrystalPlasticityState<dim>(ref_euler_angles);
+    auto example_state = new FCCState<dim>(ref_euler_angles);
 
     materials[/*material id*/ 0] = new ExplicitRateCrystalDependentPlasticity<dim>(elastic_base,
                                                                                    example_state,
@@ -175,7 +178,7 @@ ViscoCrystalplasticCubeWithSpherePBC<dim>::ViscoCrystalplasticCubeWithSpherePBC(
 }
 
 template<unsigned int dim>
-void ViscoCrystalplasticCubeWithSpherePBC<dim>::read_and_refine_mesh() {
+void FCCViscoCrystalplasticCubeWithSpherePBC<dim>::read_and_refine_mesh() {
     GridIn<dim> grid_in;
     grid_in.attach_triangulation(triangulation);
     ifstream input_file("../src/examples/cube-with-sphere/cube-with-particle.ucd");
@@ -243,4 +246,4 @@ void ViscoCrystalplasticCubeWithSpherePBC<dim>::read_and_refine_mesh() {
 
 }
 
-#endif //SOLVER_VISCOCRYSTALPLASTICCUBEWITHSPHEREPBC_H
+#endif //SOLVER_FCCVISCOCRYSTALPLASTICCUBEWITHSPHEREPBC_H

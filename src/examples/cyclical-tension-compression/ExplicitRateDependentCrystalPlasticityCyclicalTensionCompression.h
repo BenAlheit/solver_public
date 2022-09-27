@@ -74,6 +74,7 @@ ExplicitRateDependentCrystalPlasticityCyclicalTensionCompression<dim>::ExplicitR
     map<nVectorOutput, vector<unsigned int>, nOutputHash> n_vector_outputs;
     n_vector_outputs.insert({OutputFlags::nVectorOutput(OutputFlags::nVectorOutputFlag::M, n_sys), material_ids});
     n_vector_outputs.insert({OutputFlags::nVectorOutput(OutputFlags::nVectorOutputFlag::S, n_sys), material_ids});
+    n_vector_outputs.insert({OutputFlags::nVectorOutput(OutputFlags::nVectorOutputFlag::CRYSTAL_BASIS, dim), material_ids});
 
     map<nTensorOutput, vector<unsigned int>, nOutputHash> n_tensor_outputs;
     n_tensor_outputs.insert({OutputFlags::nTensorOutput(OutputFlags::nTensorOutputFlag::SYS, n_sys), material_ids});

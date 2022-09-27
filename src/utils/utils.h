@@ -44,4 +44,17 @@ void print_2nd_order(const Tensor<2, dim> & in){
     }
 }
 
+template<unsigned int dim>
+void polar_decomposition(const Tensor<2, dim> & F,
+                         Tensor<2, dim> & V,
+                         Tensor<2, dim> & R){
+    SymmetricTensor<2, dim> B = symmetrize(F * transpose(F));
+    const auto eigs = eigenvectors(B);
+    V = 0;
+    for (int i = 0; i < dim; ++i) {
+        V += sqrt(eigs[i].first) * outer_product(eigs[i].second, eigs[i].second);
+    }
+    R = invert(V) * F;
+}
+
 #endif //SOLVER_UTILS_H

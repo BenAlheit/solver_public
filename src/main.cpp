@@ -24,6 +24,7 @@
 #include "examples/cube-with-sphere/CubeWithSpherePBC.h"
 #include "examples/cube-with-sphere/ViscoplasticCubeWithSpherePBC.h"
 #include "examples/cube-with-sphere/ViscoCrystalplasticCubeWithSpherePBC.h"
+#include "examples/cube-with-sphere/FCCViscoCrystalplasticCubeWithSpherePBC.h"
 
 #include "examples/polycrystal/PolycrystalPBC.h"
 #include "examples/polycrystal-imp/PolycrystalIMPPBC.h"
@@ -72,7 +73,8 @@ int main(int argc, char **argv){
 //    auto problem = CubeWithSphere<dim>();
 //    auto problem = CubeWithSpherePBC<dim>();
 //    auto problem = ViscoplasticCubeWithSpherePBC<dim>();
-    auto problem = ViscoCrystalplasticCubeWithSpherePBC<dim>();
+//    auto problem = ViscoCrystalplasticCubeWithSpherePBC<dim>();
+    auto problem = FCCViscoCrystalplasticCubeWithSpherePBC<dim>();
 
 
 //    ElasticProblem<2> elastic_problem;

@@ -33,7 +33,8 @@ public:
     CrystalPlasticityState(CrystalPlasticityState<dim> *to_cpy)
             : KronnerDecomp<dim>(to_cpy), n(to_cpy->n), Fp_n(to_cpy->Fp_n), Fp_n1(to_cpy->Fp_n1), ref_s(to_cpy->ref_s),
               ref_m(to_cpy->ref_m), ref_sys(to_cpy->ref_sys), nu_n(to_cpy->nu_n), nu_n1(to_cpy->nu_n1), ta_n(to_cpy->ta_n), ta_n1(to_cpy->ta_n1),
-              H_n(to_cpy->H_n), H_n1(to_cpy->H_n1), ref_euler_angles(to_cpy->ref_euler_angles) {};
+              H_n(to_cpy->H_n), H_n1(to_cpy->H_n1), ref_euler_angles(to_cpy->ref_euler_angles),
+              ref_crystal_basis(to_cpy->ref_crystal_basis) {};
 
 
     virtual StateBase<dim> *
@@ -138,6 +139,11 @@ public:
                 return Fp_n1 * ref_m.at(i);
             case nVectorOutputFlag::S:
                 return Fp_n1 * ref_s.at(i);
+            case nVectorOutputFlag::CRYSTAL_BASIS:{
+                Tensor<2, dim> V, R;
+                polar_decomposition<dim>(this->F_n1, V, R);
+                return R * ref_crystal_basis.at(i);
+            }
             default:
                 return StateBase<dim>::n_vector_output(flag, i);
         }
@@ -171,6 +177,7 @@ public:
     vector<double> H_n1;
 
     const vector<double> ref_euler_angles;
+    vector<Tensor<1, dim>> ref_crystal_basis;
 
 protected:
 
@@ -205,6 +212,14 @@ protected:
             ref_s.at(alpha) = ref_rotation_matrix * ref_s.at(alpha);
             ref_m.at(alpha) = ref_rotation_matrix * ref_m.at(alpha);
             ref_sys.at(alpha) = outer_product(ref_s.at(alpha), ref_m.at(alpha));
+        }
+
+        ref_crystal_basis = vector<Tensor<1, dim>>(dim);
+
+        for (unsigned int i_comp = 0; i_comp < dim ; i_comp++){
+            ref_crystal_basis.at(i_comp) = 0;
+            ref_crystal_basis.at(i_comp)[i_comp] = 1;
+            ref_crystal_basis.at(i_comp) = ref_rotation_matrix * ref_crystal_basis.at(i_comp);
         }
     }
 
