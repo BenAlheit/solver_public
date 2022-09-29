@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Solver.h"
 #include "SolverExample.h"
-
+#include "step-16.h"
 
 #include "examples/CubeWithIMP.h"
 
@@ -28,6 +28,7 @@
 
 #include "examples/polycrystal/PolycrystalPBC.h"
 #include "examples/polycrystal-imp/PolycrystalIMPPBC.h"
+#include "examples/fcc-polycrystal/FCCPolycrystalIMPPBC.h"
 
 // TODO Documentation
 // TODO Documentation
@@ -74,7 +75,8 @@ int main(int argc, char **argv){
 //    auto problem = CubeWithSpherePBC<dim>();
 //    auto problem = ViscoplasticCubeWithSpherePBC<dim>();
 //    auto problem = ViscoCrystalplasticCubeWithSpherePBC<dim>();
-    auto problem = FCCViscoCrystalplasticCubeWithSpherePBC<dim>();
+//    auto problem = FCCViscoCrystalplasticCubeWithSpherePBC<dim>();
+    auto problem = FCCPolycrystalIMPPBC<dim>();
 
 
 //    ElasticProblem<2> elastic_problem;
