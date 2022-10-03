@@ -102,7 +102,7 @@ for the crystal grains, is presented for three different times in the simulation
 
 ![alt text](https://github.com/BenAlheit/solver_public/blob/master/imgs/se.png?raw=true)
 
-Clearly, the strain energy density is larger in the IMPs. The volume averaged first Piol-Kirchhoff stress is presented below for varying degrees of mesh refinement and for microstructures that contain IMPs as well as microstructures that do not. 
+Clearly, the strain energy density is larger in the IMPs. The volume averaged first Piola-Kirchhoff stress is presented below for varying degrees of mesh refinement and for microstructures that contain IMPs as well as microstructures that do not. 
 
 ![alt text](https://github.com/BenAlheit/solver_public/blob/master/imgs/fcc-polycrystal-first-stresses.png?raw=true)
 
